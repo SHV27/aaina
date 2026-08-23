@@ -3,22 +3,25 @@
 Resume line: **read PROGRESS.md and continue.**
 
 ## Current workstream
-Pipeline stage 5 — Arc plan (ARC_PLAN.md) about to be written. Stages 0–4 complete.
+Arc 2 — The Science Core (SCIENCE.md, full item bank, complete scoring engine, Referee suites).
 
 ## Done
-- Stage 0: INTENT.md (name locked "Aaina", Vercel+GitHub ship, free-only, escalation list).
-- Security: $VERCEL_TOKEN in .env (gitignored); .env.example; secret-scan hook wired.
-- Stage 1: RESEARCH.md + 6 lane files (instruments/licensing, counsellor craft R1–R20,
-  India market, completion UX, stack live-verified, safety helplines verified).
-- Stage 2: Boardroom minutes in DECISIONS.md — 5 pillars, cut list, 3 innovations, pre-mortem.
-- Stage 3: ARCHITECTURE.md — state authority, choke points, 5 contradictions resolved, stack lock.
-- Stage 4: CLAUDE.md constitution, hooks (.claude/settings.json), scripts/secret-scan.mjs, git init (main).
+- Stages 0–4 complete (intent, recon, boardroom, architecture, constitution) — see git history.
+- ARC_PLAN.md frozen (5 arcs).
+- **Arc 1 CLOSED (all acceptance boxes checked):** Vite7/React19/TS scaffold; theme.css tokens
+  ("Warm paper, brass mirror"); answersStore + safetyStore (memory-only); Claim receipts
+  renderer (dev-throw/prod-refuse, two-sided tests); ModeBadge; engine skeleton + tests
+  (7 passing); Playwright desktop+mobile green, zero console errors; screenshots reviewed
+  (squint test passed); GitHub repo github.com/SHV27/aaina pushed;
+  **LIVE: https://aaina-two.vercel.app** (served-artifact verified: title, bundle, SPA rewrite).
+  Vercel scope: god-shaurya; project: aaina.
 
 ## ONE next action
-Write ARC_PLAN.md (studio-arcs) and start Arc 1.
+Arc 2: write SCIENCE.md + full item bank (CSI-16, ECR-S, CPQ-SF, IMS, Joel pool, WAST, MC-C, IRIs)
+with per-item citations, then complete engine/score.ts with published scoring + quality flags.
 
 ## Gate status
-Nothing built yet — gates defined in CLAUDE.md Verifier.
+Arc-1 gates green (unit 7/7, e2e 2/2, console clean, live URL verified). Arc 2–5 pending.
 
 ## Key facts for cold resume
 - Toolchain ready: Node 24, gh CLI logged in as SHV27, Vercel CLI 54.7.1.
