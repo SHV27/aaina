@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "deny": [
+      "Read(./.env)",
+      "Read(./.env.*)"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash|PowerShell",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node -e \"const i=JSON.parse(require('fs').readFileSync(0,'utf8'));const c=(i.tool_input&&(i.tool_input.command||''))||'';if(/git\\s+commit/.test(c)){const{execSync}=require('child_process');try{execSync('node scripts/secret-scan.mjs',{stdio:'inherit',cwd:i.cwd||process.cwd()})}catch(e){process.exit(2)}}\""
+          }
+        ]
+      }
+    ]
+  }
+}
