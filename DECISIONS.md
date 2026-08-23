@@ -56,3 +56,6 @@
 - D9 (Arc 2): WAST administered gender-neutrally to all users; adaptation labelled in SCIENCE.md §7; gate = published cutoff >=13 OR WAST-Short both-extremes OR any physical/sexual endorsement (conservative-by-design).
 - D10 (Arc 2): CSI-16 prorated to the 16-item metric when >=13 answered, else null — no fake scores from partial data.
 - D11 (Arc 2): MC Form C wording follows the standard canonical Reynolds (1982) reproduction; keying (5,7,9,10,13 True) verified against two independent sources.
+- D12 (Arc 5): Recharts removed — report visuals are bespoke range-meters/palde rows (dataviz-skill form heuristic: scales on own published ranges are meters, not axis charts); palette validator failed sindoor-brass as a categorical pair (deutan dE 5.0), so marks are single-hue ink with sindoor markers, identity by position+label.
+- D13 (Arc 5): Sealed exchange honesty — links are compression, not encryption; UI says so plainly ("vaada software ka hai, taale ka nahi"). Commit-before-see enforced by app flow.
+- D14 (Arc 5): e2e runs with reducedMotion:reduce (deterministic screenshots + exercises the a11y path); e2e preview pinned to port 4315 strictPort after finding a foreign dev server squatting 4173.

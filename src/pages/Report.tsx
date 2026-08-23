@@ -1,11 +1,14 @@
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { Claim } from "../components/Claim";
+import { Narrator } from "../components/Narrator";
 import { SafetyResources } from "../components/SafetyResources";
 import { Palda, ScaleMeter } from "../components/charts";
 import { generateReport, type Sentence } from "../engine/report";
+import { analyzeCouple } from "../engine/couple";
 import { useAnswersStore } from "../store/answers";
 import { useSafetyStore } from "../store/safety";
+import { usePartnerStore } from "../store/partner";
 
 /** The Verdict Report — R1–R20 sequence rendered with receipts everywhere.
  *  The verdict sits behind an invitation gate (SPIKES-I): the reader chooses
@@ -32,11 +35,21 @@ export function Report() {
   const safetyAnswers = useSafetyStore((s) => s.answers);
   const [verdictOpen, setVerdictOpen] = useState(false);
 
+  const partnerAnswers = usePartnerStore((s) => s.answers);
+  const partnerFrom = usePartnerStore((s) => s.from);
+
   const answerList = useMemo(() => Object.values(answers), [answers]);
   const safetyList = useMemo(() => Object.values(safetyAnswers), [safetyAnswers]);
   const report = useMemo(
     () => (answerList.length > 0 ? generateReport(answerList, safetyList) : null),
     [answerList, safetyList],
+  );
+  const couple = useMemo(
+    () =>
+      partnerAnswers && answerList.length >= 60
+        ? analyzeCouple(answers, partnerAnswers)
+        : null,
+    [partnerAnswers, answers, answerList.length],
   );
 
   if (!report) {
@@ -79,6 +92,8 @@ export function Report() {
           <SafetyResources />
         </div>
       )}
+
+      <Narrator report={report} />
 
       {/* R10 — affirmation first */}
       <section className="reveal-late mt-8">
@@ -176,6 +191,68 @@ export function Report() {
           </div>
         )}
       </section>
+
+      {/* Do Aaine — perception gaps (couple mode) */}
+      {couple && (
+        <section className="mt-8 rounded-(--radius-card) border border-brass p-6">
+          <p className="font-devanagari text-lg text-brass-deep">दो आईने</p>
+          <h2 className="mt-1 font-display text-2xl font-light text-ink">
+            Do nazrein, ek rishta{partnerFrom ? ` — aap aur ${partnerFrom}` : ""}
+          </h2>
+          <p className="mt-3 max-w-prose leading-relaxed text-ink-soft">
+            <Claim evidence={couple.framing.evidence}>{couple.framing.text}</Claim>
+          </p>
+          <div className="mt-4 space-y-4">
+            {couple.scaleGaps.map((g) => (
+              <div key={g.key}>
+                <div className="flex items-baseline justify-between">
+                  <p className="text-sm font-medium text-ink">{g.label}</p>
+                  <p className="text-xs tabular-nums text-ink-faint">
+                    farak {(g.gap * 100).toFixed(0)}%
+                  </p>
+                </div>
+                {[
+                  { who: "Aap", v: g.mine },
+                  { who: partnerFrom || "Saathi", v: g.theirs },
+                ].map((row) => (
+                  <div key={row.who} className="mt-1 flex items-center gap-2">
+                    <span className="w-14 shrink-0 text-xs text-ink-faint">{row.who}</span>
+                    <div className="relative h-2 flex-1 rounded-full bg-paper-edge">
+                      <div
+                        className="absolute inset-y-0 left-0 rounded-full bg-ink-soft"
+                        style={{ width: `${Math.max(2, row.v * 100)}%` }}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ))}
+          </div>
+          {couple.agreementNote && (
+            <p className="mt-4 max-w-prose leading-relaxed text-ink-soft">
+              <Claim evidence={couple.agreementNote.evidence}>
+                {couple.agreementNote.text}
+              </Claim>
+            </p>
+          )}
+          {couple.topGaps.length > 0 && (
+            <div className="mt-5 border-t border-paper-edge pt-4">
+              <h3 className="text-sm font-medium text-ink">
+                Jahan nazrein sabse alag thi
+              </h3>
+              <ul className="mt-2 space-y-3">
+                {couple.topGaps.map((g) => (
+                  <li key={g.itemId} className="text-sm leading-relaxed text-ink-soft">
+                    <Claim evidence={g.evidence}>
+                      {`"${g.itemText}" — aapne kaha ${g.mineLabel ? `"${g.mineLabel}"` : "—"}, ${partnerFrom || "saathi"} ne kaha ${g.theirsLabel ? `"${g.theirsLabel}"` : "—"}.`}
+                    </Claim>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </section>
+      )}
 
       {/* R12 — the cycle, named */}
       {report.cycle && (

@@ -3,7 +3,24 @@
 Resume line: **read PROGRESS.md and continue.**
 
 ## Current workstream
-Arc 3 — The Mirror UX + Jhalak (full assessment flow, autosave/resume, safety chapter, break screens).
+Arc 5 — final verification + ship (e2e suite running; then studio-verify, security audit,
+Lighthouse, GROQ env var, prod deploy, push).
+
+## Arc 3+4 CLOSED
+Jhalak (8-item, receipts, funnel) · full 5-chapter Mirror (one-q-per-screen, chapter
+dots+bars, boundary insights via Claim, break screens, autosave/resume incl. reload test) ·
+safety chapter (interstitial, quick-exit w/ honest note, memory-only, skippable) · verdict
+report: R1–R20 sequence, invitation gate, archetypes (warm-rooted/strained-rooted/
+ambivalent-centre/leaning-out/constrained-staying/unclear), three paths w/ costs, time-boxed
+experiment, own-contribution, autonomy clause; danger variant suppresses cycle/experiment
+(R13 exception in engine); bespoke meters (dataviz-validated single-hue) · print CSS.
+Fixed: Assessment safety-phase priority bug (was skipping interstitial); lz-string CJS
+interop; Playwright screenshot animation artifact (reducedMotion) ; e2e port 4315 strict.
+
+## Arc 5 progress
+codec (sealed exchange, WAST unencodable by construction, checksum) + couple gap analysis +
+/saath UI (commit-before-see) + report Do-Aaine section + api/narrate.ts (allowlist bands,
+throttle, model-list config) + Narrator opt-in UI + README. 47 unit tests green.
 
 ## Arc 2 CLOSED (all boxes)
 SCIENCE.md (hand-to-a-professional doc) · full item bank: CSI-16(16)+ECR-S(12)+CPQ-SF(11)+

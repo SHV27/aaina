@@ -30,6 +30,12 @@ export function Home() {
         >
           Poora Aaina — 5 chapters
         </Link>
+        <Link
+          to="/saath"
+          className="rounded-full border border-paper-edge px-7 py-3.5 text-ink-soft transition-colors hover:border-sindoor hover:text-ink"
+        >
+          Saath mein — do aaine
+        </Link>
         <span className="text-sm text-ink-faint">
           No signup · no judgement · India ke liye bana
         </span>

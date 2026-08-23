@@ -1,4 +1,8 @@
-import { compressToEncodedURIComponent, decompressFromEncodedURIComponent } from "lz-string";
+import lzString from "lz-string";
+
+// Default-import + destructure: lz-string is CJS; this form works under both
+// Vite's interop and plain Node (Playwright specs import this module).
+const { compressToEncodedURIComponent, decompressFromEncodedURIComponent } = lzString;
 import type { Answer } from "./types";
 import { ALL_ASSESSMENT_ITEMS } from "./items";
 
