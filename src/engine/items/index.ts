@@ -29,7 +29,8 @@ export interface ChapterMeta {
 }
 
 /** The five visible chapters, in order. Safety (suraksha) is separate — it is
- *  presented after chapter 2 behind a privacy interstitial, memory-only. */
+ *  presented LAST, behind a privacy interstitial, immediately before the report
+ *  (memory-only answers never cross a reload gap that way). */
 export const CHAPTERS: ChapterMeta[] = [
   {
     id: "dil",

@@ -52,6 +52,11 @@ export const CITATIONS = {
     full: "Reynolds, W. M. (1982). Development of reliable and valid short forms of the Marlowe–Crowne Social Desirability Scale. Journal of Clinical Psychology, 38(1), 119–125.",
     measures: "Socially desirable responding (MC Form C)",
   },
+  "karney-bradbury-1995": {
+    short: "Karney & Bradbury (1995)",
+    full: "Karney, B. R., & Bradbury, T. N. (1995). The longitudinal course of marital quality and stability: A review of theory, method, and research. Psychological Bulletin, 118(1), 3–34.",
+    measures: "Vulnerability–stress–adaptation model of relationship outcomes",
+  },
   "doherty-2016": {
     short: "Doherty et al. (2016)",
     full: "Doherty, W. J., Harris, S. M., & Wilde, J. L. (2016). Discernment counseling for 'mixed-agenda' couples. Journal of Marital and Family Therapy, 42(2), 246–255.",
