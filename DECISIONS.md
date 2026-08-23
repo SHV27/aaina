@@ -51,3 +51,8 @@
 1. Couple mode ships v1 as sealed-exchange gap analysis (lean), not a full second product.
 2. No accounts at all — resume via device + private resume link, not phone/OTP.
 3. Register: English questions, Hinglish warmth in microcopy and section names (Jhalak, Aaina, "Sirf aapke liye").
+
+- D8 (Arc 2): Joel leave-list administered as 23 of the 25 published table categories — excluded "General frustration" (Sample-C-only coding) and "Concern for partner" (near-zero endorsement), matching the paper's stated 23-item count; flagged as our mapping pending the SAGE supplement.
+- D9 (Arc 2): WAST administered gender-neutrally to all users; adaptation labelled in SCIENCE.md §7; gate = published cutoff >=13 OR WAST-Short both-extremes OR any physical/sexual endorsement (conservative-by-design).
+- D10 (Arc 2): CSI-16 prorated to the 16-item metric when >=13 answered, else null — no fake scores from partial data.
+- D11 (Arc 2): MC Form C wording follows the standard canonical Reynolds (1982) reproduction; keying (5,7,9,10,13 True) verified against two independent sources.

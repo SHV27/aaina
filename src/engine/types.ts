@@ -1,13 +1,12 @@
 import type { CitationId } from "./citations";
 
 export type ChapterId =
-  | "jhalak"
-  | "baat-cheet" // How you talk & fight (CPQ)
-  | "dil" // Closeness & satisfaction (CSI)
-  | "jadein" // Roots: commitment & investment (IMS)
-  | "aap" // You as an individual (ECR-S, MC-C)
-  | "dono-taraf" // Both directions: stay/leave reasons (Joel)
-  | "suraksha"; // Safety (WAST) — memory-only store
+  | "dil" // Chapter 1 — closeness & satisfaction (CSI-16)
+  | "baat-cheet" // Chapter 2 — how you talk & fight (CPQ-SF + ECR-S)
+  | "jadein" // Chapter 3 — roots: commitment, investment, alternatives (IMS)
+  | "dono-taraf" // Chapter 4 — both directions: stay/leave reasons (Joel)
+  | "aap" // Chapter 5 — you as an individual (MC-C)
+  | "suraksha"; // Safety (WAST) — memory-only store, never persisted
 
 export type InstrumentId =
   | "csi16"
@@ -65,6 +64,9 @@ export interface ScaleScores {
   cpqDemandWithdraw: number | null;
   cpqConstructive: number | null;
   imsCommitment: number | null;
+  imsSatisfaction: number | null;
+  imsAlternatives: number | null;
+  imsInvestment: number | null;
   stayStrength: number | null;
   leaveStrength: number | null;
   ambivalent: boolean | null;
