@@ -3,7 +3,14 @@
 Resume line: **read PROGRESS.md and continue.**
 
 ## Current workstream
-Arc 2 — The Science Core (SCIENCE.md, full item bank, complete scoring engine, Referee suites).
+Arc 3 — The Mirror UX + Jhalak (full assessment flow, autosave/resume, safety chapter, break screens).
+
+## Arc 2 CLOSED (all boxes)
+SCIENCE.md (hand-to-a-professional doc) · full item bank: CSI-16(16)+ECR-S(12)+CPQ-SF(11)+
+IMS(22)+Joel(27+23)+WAST(8)+MC-C(13)+IRI(3) with per-item citations, verbatim from fetched
+primary sources (research/items-*.md) · engine/score.ts complete (published scoring, cutoffs,
+proration, quality flags, confidence model, WAST gate) · counsellorGuard banned-strings ·
+35/35 tests green · build + e2e regression green · D8–D11 logged.
 
 ## Done
 - Stages 0–4 complete (intent, recon, boardroom, architecture, constitution) — see git history.
