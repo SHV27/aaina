@@ -19,6 +19,12 @@ Non-negotiables: (1) no compatibility %, no divorce probability, no lie-proof cl
 (2) safety data is radioactive — memory only, never persisted/exchanged/sent/printed;
 (3) app is fully complete with zero API keys (template narrator is the reference rendering).
 
+## Art direction (obeys on every screen)
+"Warm paper, brass mirror": handmade-paper cream ground, deep warm-ink text, ONE signal color
+(sindoor terracotta), brass-gold ONLY at mirror/verdict moments; Fraunces serif display +
+clean sans body; Devanagari accents (आईना); soft shadows, generous air, slow meaningful
+reveals; max 4 colors; no purple gradients, no glassmorphism, no emoji-as-design.
+
 ## Architecture
 State authority: `answersStore` (zustand+persist); ALL derivation through `src/engine/score.ts`
 and `src/engine/report.ts` (pure, deterministic). `safetyStore` = memory only, no persist/codec
