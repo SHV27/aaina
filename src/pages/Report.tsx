@@ -297,7 +297,7 @@ export function Report() {
         )}
       </section>
 
-      {(verdictOpen || report.danger) && (
+      <div className={verdictOpen || report.danger ? undefined : "hidden print:block"}>
         <>
           {/* R15 — three paths, each with a cost */}
           <section className="mt-10">
@@ -336,7 +336,7 @@ export function Report() {
             <p className="max-w-prose leading-relaxed text-ink">{report.autonomy}</p>
           </section>
         </>
-      )}
+      </div>
 
       <div className="no-print mt-12 flex flex-wrap items-center gap-4">
         <Link to="/" className="text-sindoor underline underline-offset-4">← Ghar wapas</Link>

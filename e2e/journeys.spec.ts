@@ -129,8 +129,9 @@ test("full solo mirror: 5 chapters → boundaries with receipts → safety inter
   await expect(page.getByText(/aapke jawaabon ka naksha/i)).toBeVisible();
   await expect(page.getByText(/funk & rogge, 2007/i).first()).toBeVisible();
 
-  // R6 invitation gate: verdict hidden until the reader consents.
-  await expect(page.getByText(/teen raaste/i)).toHaveCount(0);
+  // R6 invitation gate: verdict hidden until the reader consents
+  // (the tail exists in DOM for print, but must be invisible on screen).
+  await expect(page.getByText(/teen raaste/i)).toBeHidden();
   await page.getByRole("button", { name: /main taiyaar hoon/i }).click();
   await expect(page.getByText(/teen raaste/i)).toBeVisible();
   await expect(page.getByText(/raasta 3/i)).toBeVisible();

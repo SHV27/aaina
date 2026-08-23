@@ -1,13 +1,13 @@
-/** Vercel serverless fn — the ONLY server code in Aaina, and the only place a
- *  secret lives. Receives an anonymized band summary (typed allowlist — never
- *  raw answers, never safety data, enforced by schema below), returns one warm
- *  opening paragraph. The app is fully complete without this endpoint.
- *  Models are config: llama-3.3-70b is retired (2026-08-16); do not pin old ids. */
+/** Vercel serverless fn (Node runtime, (req,res) signature) — the ONLY server
+ *  code in Aaina, and the only place a secret lives. Receives an anonymized
+ *  band summary (typed allowlist — never raw answers, never safety data),
+ *  returns one warm opening paragraph. The app is fully complete without it.
+ *  Models are config: llama-3.3-70b is retired (2026-08-16); don't pin old ids. */
 
 const MODELS = ["openai/gpt-oss-120b", "qwen/qwen3.6-27b"];
 const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
 
-// Per-IP token bucket (per warm instance — good enough for free-tier abuse damping).
+// Per-IP token bucket (per warm instance — abuse damping on the free tier).
 const buckets = new Map<string, { tokens: number; last: number }>();
 const RATE = { capacity: 6, refillPerMin: 3 };
 
@@ -46,8 +46,7 @@ interface Payload {
 
 function validate(body: unknown): Payload | null {
   if (typeof body !== "object" || body === null) return null;
-  const keys = Object.keys(body as Record<string, unknown>);
-  if (keys.length > 5) return null; // allowlist: nothing extra rides along
+  if (Object.keys(body as Record<string, unknown>).length > 5) return null;
   const b = body as Record<string, unknown>;
   if (
     typeof b.archetype !== "string" || !ARCHETYPES.has(b.archetype) ||
@@ -61,28 +60,35 @@ function validate(body: unknown): Payload | null {
   return b as unknown as Payload;
 }
 
-export default async function handler(req: Request): Promise<Response> {
+// Untyped req/res to avoid a @vercel/node dependency; shapes are stable.
+export default async function handler(
+  req: { method?: string; body?: unknown; headers: Record<string, string | string[] | undefined> },
+  res: {
+    status: (code: number) => { json: (v: unknown) => void };
+    setHeader: (k: string, v: string) => void;
+  },
+): Promise<void> {
+  res.setHeader("content-type", "application/json");
   if (req.method !== "POST") {
-    return new Response(JSON.stringify({ error: "method" }), { status: 405 });
+    res.status(405).json({ error: "method" });
+    return;
   }
   const key = process.env.GROQ_API_KEY;
   if (!key) {
-    return new Response(JSON.stringify({ error: "keyless", template: true }), { status: 503 });
+    res.status(503).json({ error: "keyless", template: true });
+    return;
   }
-  const ip =
-    req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
+  const fwd = req.headers["x-forwarded-for"];
+  const ip = (Array.isArray(fwd) ? fwd[0] : fwd)?.split(",")[0]?.trim() || "unknown";
   if (!allow(ip)) {
-    return new Response(JSON.stringify({ error: "rate" }), { status: 429 });
+    res.status(429).json({ error: "rate" });
+    return;
   }
 
-  let payload: Payload | null = null;
-  try {
-    payload = validate(await req.json());
-  } catch {
-    payload = null;
-  }
+  const payload = validate(req.body);
   if (!payload) {
-    return new Response(JSON.stringify({ error: "payload" }), { status: 400 });
+    res.status(400).json({ error: "payload" });
+    return;
   }
 
   const system =
@@ -109,19 +115,15 @@ export default async function handler(req: Request): Promise<Response> {
         }),
       });
       if (!r.ok) continue;
-      const data = (await r.json()) as {
-        choices?: { message?: { content?: string } }[];
-      };
+      const data = (await r.json()) as { choices?: { message?: { content?: string } }[] };
       const text = data.choices?.[0]?.message?.content?.trim();
       if (text) {
-        return new Response(JSON.stringify({ text, model }), {
-          status: 200,
-          headers: { "content-type": "application/json" },
-        });
+        res.status(200).json({ text, model });
+        return;
       }
     } catch {
       // try next model
     }
   }
-  return new Response(JSON.stringify({ error: "upstream", template: true }), { status: 503 });
+  res.status(503).json({ error: "upstream", template: true });
 }
