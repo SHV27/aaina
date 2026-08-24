@@ -2,31 +2,52 @@
 
 Resume line: **read PROGRESS.md and continue.**
 
-## STATUS: v2 REBUILD IN FLIGHT — Arc V1 (foundations)
+## STATUS: v2 LIVE ✦ 2026-08-24
 
-v1 SHIPPED and live at https://aaina-two.vercel.app (kept live during rebuild; v2 replaces it
-at the same URL). v2 re-brief: VISION-BRIEF-aaina-v2.md · INTENT-v2.md · RESEARCH-v2.md ·
-BOARDROOM-v2.md · ARCHITECTURE-v2.md · ARC_PLAN-v2.md · **ESCALATION-1.md awaits founder
-(A: stay free ~10-15 reports/day · B: Groq dev tier ₹1,580/mo @100/day). Founder's mid-build
-message: LinkedIn-scale userbase (~1.5K impressions) for now → free key suffices; perfection
-mandatory; future scale = paid API only, no software changes → provider-agnostic seam already
-in the architecture. Treat as soft-A pending his explicit word.**
+**Live:** https://aaina-two.vercel.app · **Source:** https://github.com/SHV27/aaina
+v2 fully replaces v1 at the same URL. Real AI generation verified in production.
 
-## Keys (in .env, gitignored): VERCEL_TOKEN (revokes ~08-31), GROQ_API_KEY (verified live:
-gpt-oss-120b, 8K TPM measured ceiling — 413 on 18K request; strict JSON schema works).
+## What v2 is
+122 questions → 14 scored dimensions → contradiction engine → AI-written dossier bound to
+evidence → branching plan of published interventions → safety branch. English voice, Hinglish
+only in the headline. Full detail in README.md, SCIENCE-v2.md, PROOF-ANTI-GENERIC.md.
 
-## Arc V1 progress (14-dimension foundations)
-DONE: src/v2/engine/dimensions.ts (14 dims + bands) · sources.ts (~40 citations registry) ·
-types.ts · contradictions.ts (11 cross-dim rules + within-dim split detection, each with
-research significance text) · score.ts (normalize 0-100, evidence-weighted overall with
-visible formula, quality signals, assess()).
-IN FLIGHT: subagent fetching verbatim items (PPRS, GMSEX, Rempel trust, Phubbing, IES,
-Muise jealousy, Knobloch-Solomon uncertainty, FOBS, GHOST) — may need re-ping after break.
-TODO: item bank (~100 items: fetched scales + v1-verified CSI/ECR/CPQ/IMS subsets + bespoke
-values/family modules) · SCIENCE-v2.md · engine tests · English-only lint.
+## Pipeline artifacts (v2)
+INTENT-v2 · RESEARCH-v2 (+research/v2-lane1..5) · BOARDROOM-v2 · ARCHITECTURE-v2 · ARC_PLAN-v2 ·
+SCIENCE-v2 · PROOF-ANTI-GENERIC · ESCALATION-1.
+
+## Gate status
+- Unit + invariant suite: 44/44 green (item bank integrity, scoring at both extremes,
+  direction-from-meaning test, contradiction engine two-sided, plan contraindications,
+  voice guard, composer client).
+- e2e: 12/12 green desktop + mobile (English-body check, context gating, resume-after-reload,
+  dossier+plan render, safety branch never-stored + solo-only plan, science/privacy pages).
+- Anti-generic proof (live model, 5 people): **0 identical sentences across 10 pairs**;
+  worst word overlap 31.6%; A vs B differ by 3.6 overall points and share nothing.
+- Live production: all routes 200, `/api/compose` 200 with real generation, report verified
+  end to end in a browser quoting the user's own answers.
+
+## Bugs found by running it (not by tests)
+1. **Direction double-flip** — score direction was encoded on BOTH the item (`reverse`) and the
+   dimension (`invert`); they cancelled, so a badly-answered conflict profile scored 82/100.
+   Fixed by making the item the only source of direction, plus a test asserting direction from
+   the actual MEANING of 20 named items (self-consistent tests could not catch this).
+2. **`api/*.ts` cross-directory import** — Vercel transpiles api files in place without bundling
+   imports from `src/`, so the deployed function 500'd with MODULE_NOT_FOUND. Fixed by moving
+   the contract to `api/_contract.ts` (re-exported from src, still one copy) and adding
+   tsconfig.api.json so `tsc -b` typechecks the api directory.
+
+## ESCALATION-1 (awaiting founder, nothing blocked)
+Free Groq tier measured at **8,000 tokens/minute** (an 18K request returns HTTP 413) — roughly
+10–15 full reports/day. Founder's stated scale (LinkedIn, ~1.5K impressions) fits. Option B
+(Groq Developer tier) is ~₹1,580/month at 100 reports/day and is a **config change only**.
+No money spent.
 
 ## ONE next action
-Recover/re-run the verbatim-items agent, then write src/v2/engine/items/ bank.
+Optional polish only: run a Lighthouse pass on the live site and tune anything below 90.
+Everything on ARC_PLAN-v2 is otherwise complete.
 
-## Arc plan: ARC_PLAN-v2.md (V1 foundations → V2 composer → V3 assessment UX → V4 dossier+work → V5 return/proof/ship)
-## Escalate ONLY: collision decision (memo filed) · money · audience/promise · specificity unreachable · danger-case conflict.
+## Keys
+.env (gitignored): VERCEL_TOKEN (auto-revokes ~2026-08-31), GROQ_API_KEY (also set as a Vercel
+production env var). Deploy with `node scripts/deploy.mjs` — it sets the key, ships, and verifies
+the served artifact.

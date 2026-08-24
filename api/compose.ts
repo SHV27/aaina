@@ -97,9 +97,10 @@ function validate(body: unknown): ComposeRequest | null {
 
 /* --------------------------------- prompts -------------------------------- */
 
-// One source of truth for the prompt and schemas — the tests exercise the same
-// module, so what CI checks is exactly what production sends.
-import { CLAIMS_SCHEMA, CRITIQUE_SCHEMA, SYSTEM_PROMPT } from "../src/v2/ai/contract";
+// One source of truth for the prompt and schemas. The `.js` specifier is
+// deliberate: Vercel transpiles these files in place without rewriting import
+// paths, so the emitted specifier has to resolve to the emitted sibling.
+import { CLAIMS_SCHEMA, CRITIQUE_SCHEMA, SYSTEM_PROMPT } from "./_contract.js";
 
 /* --------------------------------- handler -------------------------------- */
 
