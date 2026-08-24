@@ -73,10 +73,10 @@ export function scoreDimensions(items: Item[], responses: Response[]): Dimension
     let sumRaw = 0;
     for (const item of answered) {
       const r = rmap.get(item.id)!;
-      // Dimension direction: `invert` means a high construct score is bad news,
-      // and the item bank already stores items in construct direction, so we flip once here.
-      const itemNorm = normalizeItem(item, r.value);
-      sumNorm += dim.invert ? 100 - itemNorm : itemNorm;
+      // Direction lives ONLY on the item. Every item is written so that, after
+      // its own `reverse` flag is applied, a higher value means a better
+      // standing on its dimension. No second flip exists anywhere.
+      sumNorm += normalizeItem(item, r.value);
       sumRaw += r.value;
     }
     const normalized = Math.round((sumNorm / answered.length) * 10) / 10;

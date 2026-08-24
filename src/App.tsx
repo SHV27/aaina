@@ -1,20 +1,23 @@
-import { Routes, Route } from "react-router-dom";
-import { Home } from "./pages/Home";
-import { Jhalak } from "./pages/Jhalak";
-import { AssessmentIntro } from "./pages/AssessmentIntro";
-import { Assessment } from "./pages/Assessment";
-import { Report } from "./pages/Report";
-import { Saath } from "./pages/Saath";
+import { Routes, Route, Navigate } from "react-router-dom";
+import { Landing } from "./v2/ui/Landing";
+import { Start } from "./v2/ui/Start";
+import { Assessment } from "./v2/ui/Assessment";
+import { Safety } from "./v2/ui/Safety";
+import { Report } from "./v2/ui/Report";
+import { Privacy } from "./v2/ui/Privacy";
+import { Science } from "./v2/ui/Science";
 
 export default function App() {
   return (
     <Routes>
-      <Route path="/" element={<Home />} />
-      <Route path="/jhalak" element={<Jhalak />} />
-      <Route path="/aaina" element={<AssessmentIntro />} />
-      <Route path="/aaina/sawaal" element={<Assessment />} />
+      <Route path="/" element={<Landing />} />
+      <Route path="/start" element={<Start />} />
+      <Route path="/assessment" element={<Assessment />} />
+      <Route path="/safety" element={<Safety />} />
       <Route path="/report" element={<Report />} />
-      <Route path="/saath" element={<Saath />} />
+      <Route path="/privacy" element={<Privacy />} />
+      <Route path="/science" element={<Science />} />
+      <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
 }

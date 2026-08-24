@@ -23,16 +23,19 @@ const phub = (n: number, text: string, reverse?: boolean, echoable?: boolean): I
   echoable,
 });
 
+/** Reverse flags read "higher raw value = worse standing on the dimension".
+ *  Item 7 is the only one written in the healthy direction, so it alone is
+ *  scored straight. */
 export const PHUBBING_ITEMS: Item[] = [
-  phub(1, "During a typical mealtime that we spend together, my partner pulls out and checks their phone.", false, true),
-  phub(2, "My partner places their phone where they can see it when we are together."),
-  phub(3, "My partner keeps their phone in their hand when they are with me."),
-  phub(4, "When my partner's phone rings or beeps, they pull it out even if we are in the middle of a conversation.", false, true),
-  phub(5, "My partner glances at their phone when talking to me.", false, true),
-  phub(6, "During leisure time that we spend together, my partner uses their phone."),
-  phub(7, "My partner does not use their phone when we are talking.", true, true),
-  phub(8, "My partner uses their phone when we are out together."),
-  phub(9, "If there is a lull in our conversation, my partner will check their phone.", false, true),
+  phub(1, "During a typical mealtime that we spend together, my partner pulls out and checks their phone.", true, true),
+  phub(2, "My partner places their phone where they can see it when we are together.", true),
+  phub(3, "My partner keeps their phone in their hand when they are with me.", true),
+  phub(4, "When my partner's phone rings or beeps, they pull it out even if we are in the middle of a conversation.", true, true),
+  phub(5, "My partner glances at their phone when talking to me.", true, true),
+  phub(6, "During leisure time that we spend together, my partner uses their phone.", true),
+  phub(7, "My partner does not use their phone when we are talking.", false, true),
+  phub(8, "My partner uses their phone when we are out together.", true),
+  phub(9, "If there is a lull in our conversation, my partner will check their phone.", true, true),
 ];
 
 /* --------------- Digital strain: jealousy and surveillance ---------------- */

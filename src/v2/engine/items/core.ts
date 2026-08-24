@@ -216,6 +216,7 @@ export const ATTACHMENT_ITEMS: Item[] = [
     text: "I need a lot of reassurance that I am loved by my partner.",
     scale: agree7,
     citation: "wei-2007",
+    reverse: true,
     echoable: true,
   },
   {
@@ -225,6 +226,7 @@ export const ATTACHMENT_ITEMS: Item[] = [
     text: "I find that my partner doesn't want to get as close as I would like.",
     scale: agree7,
     citation: "wei-2007",
+    reverse: true,
     echoable: true,
   },
   {
@@ -234,6 +236,7 @@ export const ATTACHMENT_ITEMS: Item[] = [
     text: "My desire to be very close sometimes scares people away.",
     scale: agree7,
     citation: "wei-2007",
+    reverse: true,
   },
   {
     id: "anx-4",
@@ -241,7 +244,6 @@ export const ATTACHMENT_ITEMS: Item[] = [
     section: "you",
     text: "I do not often worry about being abandoned.",
     scale: agree7,
-    reverse: true,
     citation: "wei-2007",
     echoable: true,
   },
@@ -252,6 +254,7 @@ export const ATTACHMENT_ITEMS: Item[] = [
     text: "I get frustrated if my partner is not available when I need them.",
     scale: agree7,
     citation: "wei-2007",
+    reverse: true,
   },
   {
     id: "anx-6",
@@ -260,16 +263,16 @@ export const ATTACHMENT_ITEMS: Item[] = [
     text: "I worry that my partner won't care about me as much as I care about them.",
     scale: agree7,
     citation: "wei-2007",
+    reverse: true,
     echoable: true,
   },
-  // Avoidance (item text is in the avoidance direction; dimension is inverted in scoring)
+  // Avoidance: turning-toward items score straight; distance-keeping items reverse.
   {
     id: "avo-1",
     dimension: "attachment-avoidance",
     section: "you",
     text: "It helps to turn to my romantic partner in times of need.",
     scale: agree7,
-    reverse: true,
     citation: "wei-2007",
   },
   {
@@ -279,6 +282,7 @@ export const ATTACHMENT_ITEMS: Item[] = [
     text: "I want to get close to my partner, but I keep pulling back.",
     scale: agree7,
     citation: "wei-2007",
+    reverse: true,
     echoable: true,
   },
   {
@@ -287,7 +291,6 @@ export const ATTACHMENT_ITEMS: Item[] = [
     section: "you",
     text: "I turn to my partner for many things, including comfort and reassurance.",
     scale: agree7,
-    reverse: true,
     citation: "wei-2007",
   },
   {
@@ -297,6 +300,7 @@ export const ATTACHMENT_ITEMS: Item[] = [
     text: "I try to avoid getting too close to my partner.",
     scale: agree7,
     citation: "wei-2007",
+    reverse: true,
     echoable: true,
   },
   {
@@ -305,7 +309,6 @@ export const ATTACHMENT_ITEMS: Item[] = [
     section: "you",
     text: "I usually discuss my problems and concerns with my partner.",
     scale: agree7,
-    reverse: true,
     citation: "wei-2007",
     echoable: true,
   },
@@ -316,6 +319,7 @@ export const ATTACHMENT_ITEMS: Item[] = [
     text: "I am nervous when my partner gets too close to me.",
     scale: agree7,
     citation: "wei-2007",
+    reverse: true,
   },
 ];
 

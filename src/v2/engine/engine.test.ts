@@ -11,16 +11,12 @@ const answerAll = (value: (item: Item) => number, tMs = 2500): Response[] =>
   ITEMS.map((i) => ({ itemId: i.id, value: value(i), tMs }));
 
 /** The answer that puts this person HIGHEST (best=true) on the dimension's
- *  0–100 view. Two flips can apply: the item may be reverse-keyed within its
- *  construct, and the dimension may be one where a high construct score is bad
- *  news (anxiety, avoidance, conflict, digital strain). They cancel out. */
+ *  0-100 view. Direction lives only on the item, so exactly one flip applies. */
 const extremeFor = (item: Item, best: boolean): number => {
   const vals = item.scale.map((s) => s.value);
   const hi = Math.max(...vals);
   const lo = Math.min(...vals);
-  const dimInverts = DIMENSIONS.find((d) => d.id === item.dimension)?.invert ?? false;
-  const flip = dimInverts !== Boolean(item.reverse); // XOR
-  const wantHigh = flip ? !best : best;
+  const wantHigh = item.reverse ? !best : best;
   return wantHigh ? hi : lo;
 };
 
@@ -91,6 +87,53 @@ describe("scoring", () => {
     expect(computeOverall(scores).overall).toBeLessThanOrEqual(5);
   });
 
+  /** This test exists because a real direction bug shipped: a profile that
+   *  answered every conflict question badly scored 82/100 on "How you fight",
+   *  because direction was encoded twice and the flips cancelled. These
+   *  assertions are written against the MEANING of specific items, so they fail
+   *  if the flags drift again, whatever the flags happen to say. */
+  it("known-meaning items move the score in the humanly correct direction", () => {
+    const cases: { id: string; worstIsHighRaw: boolean; note: string }[] = [
+      { id: "sat-4", worstIsHighRaw: false, note: "relationship makes me happy" },
+      { id: "com-1", worstIsHighRaw: false, note: "committed to maintaining it" },
+      { id: "com-5", worstIsHighRaw: true, note: "would not be upset if it ended" },
+      { id: "cfl-2", worstIsHighRaw: true, note: "both of us avoid discussing" },
+      { id: "cfl-5", worstIsHighRaw: true, note: "I pressure while they go silent" },
+      { id: "cfl-1", worstIsHighRaw: false, note: "both of us try to discuss" },
+      { id: "anx-1", worstIsHighRaw: true, note: "need a lot of reassurance" },
+      { id: "anx-4", worstIsHighRaw: false, note: "do NOT often worry about abandonment" },
+      { id: "avo-1", worstIsHighRaw: false, note: "helps to turn to my partner" },
+      { id: "avo-4", worstIsHighRaw: true, note: "try to avoid getting too close" },
+      { id: "phb-1", worstIsHighRaw: true, note: "partner checks phone at meals" },
+      { id: "phb-7", worstIsHighRaw: false, note: "partner does NOT use phone when talking" },
+      { id: "dgj-2", worstIsHighRaw: true, note: "likely to monitor their activities" },
+      { id: "fbs-2", worstIsHighRaw: true, note: "anxious about being single forever" },
+      { id: "gst-5", worstIsHighRaw: true, note: "their interest is inconsistent" },
+      { id: "crt-1", worstIsHighRaw: false, note: "certain how committed you are" },
+      { id: "fam-2", worstIsHighRaw: false, note: "family would accept it" },
+      { id: "fam-3", worstIsHighRaw: true, note: "pressure about the timeline" },
+      { id: "net-2", worstIsHighRaw: true, note: "someone told me they are worried" },
+      { id: "trs-6", worstIsHighRaw: true, note: "partner is very unpredictable" },
+    ];
+
+    for (const c of cases) {
+      const item = ITEM_BY_ID.get(c.id);
+      expect(item, `missing item ${c.id}`).toBeTruthy();
+      const vals = item!.scale.map((s) => s.value);
+      const at = (v: number) =>
+        scoreDimensions([item!], [{ itemId: c.id, value: v, tMs: 2000 }]).find(
+          (s) => s.dimension === item!.dimension,
+        )!.normalized;
+      const high = at(Math.max(...vals));
+      const low = at(Math.min(...vals));
+      if (c.worstIsHighRaw) {
+        expect(high, `${c.id} (${c.note}) should score WORSE at its top value`).toBeLessThan(low);
+      } else {
+        expect(high, `${c.id} (${c.note}) should score BETTER at its top value`).toBeGreaterThan(low);
+      }
+    }
+  });
+
   it("reverse-keyed items actually flip", () => {
     const reversed = ITEMS.filter((i) => i.reverse && i.instructedValue === undefined);
     expect(reversed.length).toBeGreaterThan(10);
@@ -98,16 +141,11 @@ describe("scoring", () => {
       const vals = item.scale.map((s) => s.value);
       const high = scoreDimensions([item], [{ itemId: item.id, value: Math.max(...vals), tMs: 2000 }]);
       const low = scoreDimensions([item], [{ itemId: item.id, value: Math.min(...vals), tMs: 2000 }]);
-      const dim = DIMENSIONS.find((d) => d.id === item.dimension)!;
-      // On a reversed item, the top raw value must NOT produce the top normalized score
-      // (unless the whole dimension is inverted, in which case it flips twice).
       const hi = high.find((s) => s.dimension === item.dimension)!.normalized;
       const lo = low.find((s) => s.dimension === item.dimension)!.normalized;
       expect(hi === lo, `${item.id} did not respond to its scale`).toBe(false);
-      // A reverse-keyed item on a normal dimension must score LOWER at its top
-      // raw value; on an inverted dimension the two flips cancel.
-      if (!dim.invert) expect(hi, item.id).toBeLessThan(lo);
-      else expect(hi, item.id).toBeGreaterThan(lo);
+      // A reverse-keyed item always scores lower at its top raw value.
+      expect(hi, item.id).toBeLessThan(lo);
     }
   });
 

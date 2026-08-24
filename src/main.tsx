@@ -2,10 +2,9 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
 import App from "./App";
-import "./styles/theme.css";
+import "./v2/styles/aaina.css";
 
 declare global {
-  // Injected at build time (vite.config.ts) for deploy verification.
   const __BUILD_ID__: string;
 }
 
