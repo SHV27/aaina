@@ -62,3 +62,6 @@
 - D15 (ship): api/narrate rewritten to Vercel Node (req,res) signature — Web-Request handler hung on prod (root cause: runtime invokes (req,res); response never sent). Verified live after redeploy.
 - D16 (ship): noindex removed at launch + canonical/OG meta added — this deploy IS the public launch of a free public good; soft-launch hiding contradicted the mission.
 - D17 (ship): Security audit — git history clean (only scanner regex matched), npm audit 0 vulns after happy-dom upgrade (critical RCE advisory in <=20.8.8, dev-only but fixed anyway), headers set (nosniff/DENY/no-referrer), narrate payload enum-allowlisted, no CORS wildcard, no server-side answer storage anywhere.
+- D18 (v2 kickoff): GROQ_API_KEY received from founder -> .env only. Verified live: gpt-oss-120b responds 335ms; free-tier budget measured from headers = 1,000 req/day, 8,000 tokens/min. These numbers anchor ESCALATION-1.
+- D19 (v2): v1 stays live during the v2 build (its privacy claim is true FOR v1); v2 replaces it at the same URL arc by arc.
+- D20 (v2): Collision plan per INTENT-v2 - provider-agnostic inference seam, launch on free Groq, loud degradation, ESCALATION-1.md memo with INR options for founder decision. No silent road.
