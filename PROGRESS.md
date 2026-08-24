@@ -2,29 +2,31 @@
 
 Resume line: **read PROGRESS.md and continue.**
 
-## STATUS: SHIPPED ✦ 2026-08-24
+## STATUS: v2 REBUILD IN FLIGHT — Arc V1 (foundations)
 
-**Live:** https://aaina-two.vercel.app · **Source:** https://github.com/SHV27/aaina
+v1 SHIPPED and live at https://aaina-two.vercel.app (kept live during rebuild; v2 replaces it
+at the same URL). v2 re-brief: VISION-BRIEF-aaina-v2.md · INTENT-v2.md · RESEARCH-v2.md ·
+BOARDROOM-v2.md · ARCHITECTURE-v2.md · ARC_PLAN-v2.md · **ESCALATION-1.md awaits founder
+(A: stay free ~10-15 reports/day · B: Groq dev tier ₹1,580/mo @100/day). Founder's mid-build
+message: LinkedIn-scale userbase (~1.5K impressions) for now → free key suffices; perfection
+mandatory; future scale = paid API only, no software changes → provider-agnostic seam already
+in the architecture. Treat as soft-A pending his explicit word.**
 
-All 5 arcs closed. Full pipeline ran: recon (6 lanes) → boardroom (5 pillars, 3 innovations)
-→ architecture (5 contradictions resolved) → constitution → build → verify → ship.
+## Keys (in .env, gitignored): VERCEL_TOKEN (revokes ~08-31), GROQ_API_KEY (verified live:
+gpt-oss-120b, 8K TPM measured ceiling — 413 on 18K request; strict JSON schema works).
 
-## Final gate status
-- Unit + Referee suite: 47/47 green (receipts law, danger gate, banned strings, codec
-  roundtrip, published-scoring fixtures, two-sided guards).
-- e2e journeys: 14/14 green, desktop + mobile (Jhalak, resume-after-reload, full solo mirror
-  incl. safety interstitial + quick-exit, danger branch w/ verified helplines, couple sealed
-  exchange, sealed-commit enforcement, corrupt link).
-- Lighthouse (live): Accessibility 100 · Best Practices 100 · LCP 954ms · CLS 0.00.
-- Security audit: git history clean, npm audit 0 vulns, headers set, narrate allowlist,
-  no server-side answer storage, secret-scan hook active. $VERCEL_TOKEN only in .env.
-- Live verification: all SPA routes 200; /api/narrate 503-keyless JSON (template mode by
-  design), 405 on GET; OG meta live; print/PDF verified (verdict + paths print).
+## Arc V1 progress (14-dimension foundations)
+DONE: src/v2/engine/dimensions.ts (14 dims + bands) · sources.ts (~40 citations registry) ·
+types.ts · contradictions.ts (11 cross-dim rules + within-dim split detection, each with
+research significance text) · score.ts (normalize 0-100, evidence-weighted overall with
+visible formula, quality signals, assess()).
+IN FLIGHT: subagent fetching verbatim items (PPRS, GMSEX, Rempel trust, Phubbing, IES,
+Muise jealousy, Knobloch-Solomon uncertainty, FOBS, GHOST) — may need re-ping after break.
+TODO: item bank (~100 items: fetched scales + v1-verified CSI/ECR/CPQ/IMS subsets + bespoke
+values/family modules) · SCIENCE-v2.md · engine tests · English-only lint.
 
-## Post-ship notes for next session
-- GROQ_API_KEY not set (none provided; app is 100% complete without it). To enable AI
-  narration: console.groq.com → API Keys → create key → `vercel env add GROQ_API_KEY
-  production --scope god-shaurya --token $VERCEL_TOKEN` → redeploy.
-- $VERCEL_TOKEN auto-revokes ~2026-08-31; future deploys need a fresh token in .env.
-- Parked ideas in NOTES.md (share card, Hindi full translation, retake comparison, domain).
-- Open science flag: Joel-2018 23-item leave-list mapping (D8) pending SAGE supplement.
+## ONE next action
+Recover/re-run the verbatim-items agent, then write src/v2/engine/items/ bank.
+
+## Arc plan: ARC_PLAN-v2.md (V1 foundations → V2 composer → V3 assessment UX → V4 dossier+work → V5 return/proof/ship)
+## Escalate ONLY: collision decision (memo filed) · money · audience/promise · specificity unreachable · danger-case conflict.
