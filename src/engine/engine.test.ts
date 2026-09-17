@@ -805,12 +805,71 @@ describe('the practice library prescribes real interventions', () => {
     expect(solo.length, 'every prescribed practice required the partner').toBeGreaterThan(0)
   })
 
-  it('a contraindicated practice names why, so the caution is legible', () => {
+  it('offers nothing that needs two people when the other person is not there', () => {
+    const base = arjun()
+    const alone = derive({ ...base, context: { ...base.context, stage: 'one-sided', help: ['decide'] } })
+    for (const s of alone.practices) {
+      expect(
+        PRACTICE_BY_ID[s.practiceId]!.needsPartner,
+        `${s.practiceId} needs a partner who is not there`,
+      ).toBe(false)
+    }
+  })
+
+  /* ── LAW 5, enforced in the type system rather than in prose ── */
+
+  it('every suppression names a reason AND a substitute', () => {
     for (const p of PRACTICES) {
-      const blocks = Object.keys(p.contraindications).length
-      if (blocks > 0 && (p.contraindications.physicalViolence || p.contraindications.coerciveControl)) {
-        expect(p.cautionNote, `${p.id} blocks on violence but does not say why`).toBeTruthy()
+      for (const [signal, rule] of Object.entries(p.suppressedBy ?? {})) {
+        expect(rule.why.length, `${p.id}/${signal} withholds without saying why`).toBeGreaterThan(30)
+        if (rule.substitute !== null) {
+          expect(
+            PRACTICE_BY_ID[rule.substitute],
+            `${p.id}/${signal} names a substitute that does not exist`,
+          ).toBeTruthy()
+        }
       }
     }
+  })
+
+  it('a disclosure never shortens the plan — it changes what is in it', () => {
+    const clean = derive(withoutSafetyDisclosure(arjun())).practices
+    const flagged = derive(withSafetyDisclosure(arjun())).practices
+    expect(flagged.length, 'disclosure produced a shorter plan').toBeGreaterThanOrEqual(clean.length)
+  })
+
+  it('a withheld practice is replaced by a safer one, and the swap is stated', () => {
+    const p = derive(withSafetyDisclosure(arjun()))
+    expect(p.practices.map((s) => s.practiceId)).toContain('unilateral-exit')
+    expect(
+      p.practices.filter((s) => s.because.includes('So instead of')).length,
+      'a practice was withheld silently',
+    ).toBeGreaterThan(0)
+  })
+
+  it('gates the harder vulnerability work behind the skill it depends on', () => {
+    // OurRelationship gates empathic joining behind a successful detachment conversation,
+    // because there is no therapist present to catch the bullet.
+    for (const persona of [arjun(), priya(), aarti(), meera()]) {
+      const ids = derive(persona).practices.map((s) => s.practiceId)
+      if (ids.includes('empathic-joining')) expect(ids).toContain('cycle-naming')
+      if (ids.includes('dreams-within')) expect(ids).toContain('cycle-naming')
+    }
+  })
+
+  it('states honestly whether each protocol was tested in a trial', () => {
+    for (const p of PRACTICES) expect(['trial', 'clinical']).toContain(p.evidence)
+    // Gottman-derived work is not on the well-established list and must not imply that it is.
+    expect(PRACTICE_BY_ID['softened-start']!.evidence).toBe('clinical')
+    expect(PRACTICE_BY_ID['timeout']!.evidence).toBe('clinical')
+  })
+
+  it('routes in-law conversations through the spouse whose parents they are', () => {
+    // NFHS-5 records "disrespects her in-laws" as the most widely endorsed justification for
+    // wife-beating, which makes the daughter-in-law delivering it the dangerous version.
+    const p = PRACTICE_BY_ID['inlaw-routing']!
+    expect(p.steps.join(' ')).toMatch(/own child/i)
+    expect(p.suppressedBy!.physicalViolence).toBeTruthy()
+    expect(p.suppressedBy!.familyIsTheSourceOfHarm).toBeTruthy()
   })
 })

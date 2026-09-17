@@ -1,6 +1,6 @@
 import type { Context, Scored, Finding, FourAxes, SelectedPractice, DimensionId } from './types'
 import { DIM_BY_ID } from './dimensions'
-import { selectPractices, PRACTICE_BY_ID } from './practices'
+import { selectPractices, PRACTICE_BY_ID, type Signal } from './practices'
 
 /**
  * PRESCRIBING — turning an analysis into a staged plan.
@@ -45,27 +45,25 @@ export function choosePractices(
 ): SelectedPractice[] {
   const weakest = weakestDimensions(scored)
 
-  const chosen = selectPractices(
-    {
-      help: ctx.help,
-      weakest,
-      ended: ctx.stage === 'ended' || ctx.stage === 'divorced',
-      /* Somebody still weighing whether to stay should not be handed work that assumes they are
-         staying. Doherty's distinction, enforced rather than described. */
-      stillDeciding: ctx.help.includes('decide') && !ctx.help.includes('repair'),
-      safety: {
-        physical: axes.safety.physical,
-        coercive: axes.safety.coercive,
-        selfRisk: axes.safety.selfRisk,
-        perpetration: axes.safety.perpetration,
-      },
-    },
-    MAX_PRACTICES,
-  )
+  const signals = new Set<Signal>()
+  if (axes.safety.physical) signals.add('physicalViolence')
+  if (axes.safety.coercive) signals.add('coerciveControl')
+  if (axes.safety.selfRisk) signals.add('selfRisk')
+  if (axes.safety.perpetration) signals.add('perpetration')
+  if (ctx.stage === 'ended' || ctx.stage === 'divorced') signals.add('ended')
+  /* Somebody still weighing whether to stay should not be handed work that assumes they are
+     staying. Doherty's distinction, enforced rather than described. */
+  if (ctx.help.includes('decide') && !ctx.help.includes('repair')) signals.add('stillDeciding')
+  /* One-sided, or already separated: half the library needs two people. */
+  if (ctx.stage === 'one-sided' || ctx.stage === 'separated') signals.add('partnerWillNotParticipate')
+  /* In-laws named as part of how someone is being treated is different from family pressure. */
+  if (axes.safety.coercive && ctx.familyInPlay) signals.add('familyIsTheSourceOfHarm')
+
+  const chosen = selectPractices({ help: ctx.help, weakest, signals }, MAX_PRACTICES)
 
   const accepted = findings.filter((f) => f.accepted)
 
-  return chosen.map((p) => {
+  return chosen.map(({ practice: p, substitutedFor }) => {
     // The finding this practice answers — so the plan points back at the analysis.
     const finding = accepted.find((f) => f.dimensions.some((d) => p.indicatedFor.includes(d))) ?? null
 
@@ -86,7 +84,9 @@ export function choosePractices(
 
     return {
       practiceId: p.id,
-      because,
+      because: substitutedFor
+        ? `${substitutedFor.why} So instead of "${substitutedFor.title}", this. ${because}`
+        : because,
       findingId: finding?.id ?? null,
       evidenceIds,
     }

@@ -8,6 +8,8 @@ import { SHAPE_COPY } from '../engine/axes'
 import { DIM_BY_ID } from '../engine/dimensions'
 import type { EvidencePacket, Finding, ReportSection } from '../engine/types'
 import { Claim } from './Claim'
+import { Plan } from './Plan'
+import { Takeaway } from './Takeaway'
 import { Meter, DimensionMeter, Plate, Wordmark, AmbientSupport, DegradedBanner } from './bits'
 
 const SECTION_PLATE: Record<string, string> = {
@@ -72,9 +74,15 @@ export function Report() {
           />
         ))}
 
-        {/* The plan already owns a "limits" section, so Closing must not render its own — two
-            identical headings is what that looked like in the browser. Closing keeps the
-            navigation and renders the limits only if the plan somehow dropped them. */}
+        {/* The staged plan renders from the engine, not from prose: named interventions chosen
+            for this person and filtered against their safety disclosures. It sits before the
+            take-away so the reader meets the work before the summary of it. */}
+        {!report.running && report.sections.length > 0 && <Plan packet={packet} />}
+
+        {/* One page. Clarity is less to think about, not more — a ten-thousand-word report can
+            leave an overthinker with more to churn on than they arrived with. */}
+        {!report.running && report.sections.length > 0 && <Takeaway packet={packet} />}
+
         {!report.running && report.sections.length > 0 && (
           <Closing packet={packet} limitsAlreadyShown={report.sections.some((s) => s.id === 'limits')} />
         )}
