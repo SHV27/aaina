@@ -1,13 +1,41 @@
+# secrets
 .env
 .env.*
 !.env.example
 *.key
+*.pem
+
+# deps & build
 node_modules/
 dist/
 .vercel/
 coverage/
 playwright-report/
 test-results/
-e2e/screenshots/
+.vite/
+*.tsbuildinfo
 
-.vercel
+# studio process docs — these are ours, not the repo's
+studio/
+VISION-BRIEF-*.md
+PROGRESS.md
+NOTES.md
+DECISIONS.md
+ARCHITECTURE*.md
+ARC_PLAN*.md
+BOARDROOM*.md
+RESEARCH*.md
+SCIENCE*.md
+INTENT*.md
+ESCALATION*.md
+PROOF-*.md
+CLAUDE.md
+.claude/
+
+# OS
+Thumbs.db
+.DS_Store
+
+# test output
+e2e/screenshots/
+e2e/output/
