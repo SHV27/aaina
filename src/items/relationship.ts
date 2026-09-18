@@ -129,10 +129,14 @@ export const RELATIONSHIP_ITEMS: Item[] = [
     chapter: 'between',
   },
   it('clo_2', 'We have separate lives that happen to meet sometimes.', 'closeness', true, ['aron1992']),
+  it('clo_3', 'When something good happens to me, they are the first person I want to tell.', 'closeness', false, ['aron1992', 'algoe2010']),
+  it('clo_4', 'There are whole parts of my week they know nothing about.', 'closeness', true, ['aron1992', 'reis2004']),
 
   /* ── sexual satisfaction: opt-in, and skipping changes nothing ── */
   it('sex_1', 'The physical side of this feels good to me.', 'sexualSatisfaction', false, ['joel2020'], { showWhen: (c) => notOneSided(c) && isLive(c) }),
   it('sex_2', 'I have gone along with physical closeness when I did not want to.', 'sexualSatisfaction', true, ['joel2020', 'stark2007'], { showWhen: (c) => notOneSided(c) && isLive(c) }),
+  it('sex_3', 'We can talk about this side of things without it becoming an argument.', 'sexualSatisfaction', false, ['joel2020', 'christensen1990'], { showWhen: (c) => notOneSided(c) && isLive(c) }),
+  it('sex_4', 'How often it happens is a source of tension between us.', 'sexualSatisfaction', true, ['joel2020'], { showWhen: (c) => notOneSided(c) && isLive(c) }),
 
   /* ── one-sided love: a first-class situation, not an edge case ── */
   it('one_1', 'They do not know how I feel.', 'partnerCommitment', true, ['joel2018'], { showWhen: inPlay('one-sided') }),

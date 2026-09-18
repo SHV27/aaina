@@ -154,8 +154,13 @@ export function fallbackSection(plan: SectionPlan, packet: EvidencePacket): Repo
         month: 'After a few weeks of the above',
       }
       let lastStage = ''
+      let first = true
       for (const { sp, pr } of staged) {
-        const lead = pr.stage === lastStage ? 'Alongside it' : (when[pr.stage] ?? 'Next')
+        /* Nobody's plan begins with "once that is running". If this person has nothing at the
+           'now' stage — which happens whenever their whole plan is couple work — the first step is
+           still the first step. */
+        const lead = first ? 'Start here' : pr.stage === lastStage ? 'Alongside it' : (when[pr.stage] ?? 'Next')
+        first = false
         lastStage = pr.stage
         paragraphs.push(para(
           `${lead}: ${pr.title}. ${pr.purpose} ${sp.because} ` +

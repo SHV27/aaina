@@ -23,7 +23,7 @@ export interface Slot {
   title: string
   intent: string
   words: number
-  wants: 'none' | 'strengths' | 'theme' | 'cycle' | 'deep' | 'hold' | 'exclusion' | 'future' | 'family' | 'assumption' | 'rest'
+  wants: 'none' | 'strengths' | 'theme' | 'cycle' | 'deep' | 'hold' | 'exclusion' | 'exception' | 'future' | 'family' | 'assumption' | 'concern' | 'rest'
   minFindings?: number
 }
 
@@ -34,9 +34,9 @@ const OPENING: Slot[] = [
     id: 'opening',
     title: 'What you came here with',
     intent:
-      'Quote their own words back — the problem exactly as they described it — and name the question underneath it. Nothing else. No analysis, no reassurance, no preview. If they wrote a long account, show them you read all of it by picking out the detail a skimmer would miss.',
+      'Quote their own words back — the problem exactly as they described it — and name the question underneath it. Nothing else. No analysis, no reassurance, no preview. If they wrote a long account, show them you read all of it by picking out the detail a skimmer would miss, and name what they have already tried so they know it registered.',
     words: 420,
-    wants: 'none',
+    wants: 'concern',
   },
   {
     id: 'basis',
@@ -225,6 +225,21 @@ const MIDDLE: Record<HelpMode, Slot[]> = {
   recover: [AFTERMATH, THEME, WHY, NOT, STANDING],
 }
 
+/**
+ * The one true order of the middle of a report, regardless of which help modes produced it.
+ *
+ * Argument before evidence, mechanism before numbers, numbers before options. Anything not named
+ * here sorts to the end, which is the safe direction for a slot added later.
+ */
+const CANONICAL = [
+  'theme', 'pressure', 'aftermath', 'mechanism', 'cycle', 'why', 'family', 'not', 'holding',
+  'standing', 'paths', 'read',
+]
+const canonical = (id: string) => {
+  const i = CANONICAL.indexOf(id)
+  return i < 0 ? CANONICAL.length : i
+}
+
 export function slotsFor(lens: Lens, help: HelpMode[], familyGap: boolean): Slot[] {
   if (lens === 'self') return SELF_SLOTS
 
@@ -240,10 +255,17 @@ export function slotsFor(lens: Lens, help: HelpMode[], familyGap: boolean): Slot
     }
   }
 
+  /* Somebody who asks for two kinds of help gets the union of two lists, and concatenating them
+     puts the second mode's unique sections after the first mode's closing ones. Vikram, who asked
+     to understand AND to repair, was shown "What is actually breaking" after his numbers had
+     already been read out. A report has one order regardless of how many doors were ticked. */
+  middle.sort((a, b) => canonical(a.id) - canonical(b.id))
+
   // The family section is earned by the evidence, not by the kind of problem they picked.
+  // Its position comes from CANONICAL like everything else, so it is simply appended and sorted.
   if (familyGap && !seen.has('family')) {
-    const after = middle.findIndex((s) => s.id === 'why')
-    middle.splice(after >= 0 ? after + 1 : middle.length, 0, FAMILY)
+    middle.push(FAMILY)
+    middle.sort((a, b) => canonical(a.id) - canonical(b.id))
   }
 
   const close: Slot[] = [PLAN, MARKERS, LIMITS]
@@ -256,14 +278,14 @@ export function slotsFor(lens: Lens, help: HelpMode[], familyGap: boolean): Slot
 /* ────────────────────────────  the self lens  ──────────────────────────── */
 
 const SELF_SLOTS: Slot[] = [
-  { id: 'opening', title: 'What you came here with', intent: 'Their own words back, and the question underneath the question.', words: 380, wants: 'none' },
+  { id: 'opening', title: 'What you came here with', intent: 'Their own words back, and the question underneath the question. If they said what they have already tried, name it — it rules things out and it proves you read it.', words: 380, wants: 'concern' },
   { id: 'basis', title: 'What this is built on', intent: 'What was measured and what that supports. No claims yet.', words: 320, wants: 'none' },
   { id: 'ground', title: 'What you stand on', intent: 'Their values in their own words, including the time acting on one cost them something. The foundation of everything after.', words: 700, wants: 'strengths', minFindings: 1 },
   { id: 'working', title: 'What is already strong', intent: 'Strengths with receipts. Specific, evidenced, not reassurance.', words: 620, wants: 'strengths', minFindings: 1 },
   { id: 'turn', title: 'Before the next part', intent: 'The warning shot. One paragraph, then stop.', words: 140, wants: 'none' },
   { id: 'pattern', title: 'The pattern', intent: 'The central finding as the "aha", in their vocabulary. Externalise it — a pattern they run, never a thing they are.', words: 950, wants: 'theme', minFindings: 1 },
   { id: 'belief', title: 'The belief underneath it', intent: "The core belief the pattern protects. Kegan's competing commitment: the pattern is doing a job. Name the job.", words: 900, wants: 'deep' },
-  { id: 'exception', title: 'Where it does not hold', intent: 'The unique outcome — a place in their own answers where the pattern did NOT run. Never present a pattern without its exception.', words: 600, wants: 'exclusion' },
+  { id: 'exception', title: 'Where it does not hold', intent: 'The unique outcome — a place in their own answers where the pattern did NOT run. Never present a pattern without its exception. Be curious about what was different there rather than prescriptive; the reader knows and you do not.', words: 600, wants: 'exception', minFindings: 1 },
   { id: 'not', title: 'What you are not', intent: 'Exclusion claims from their own profile. What would be true of most people but is demonstrably not true of them.', words: 520, wants: 'exclusion', minFindings: 1 },
   { id: 'standing', title: 'Your profile, read out', intent: 'The dimensions in plain language, with what stands out within their own shape rather than against anyone else.', words: 700, wants: 'rest' },
   { id: 'future', title: 'The person you described', intent: 'Their future self in their own words, and the specific, named distance between here and there.', words: 850, wants: 'future' },

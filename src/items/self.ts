@@ -98,12 +98,21 @@ export const SELF_ITEMS: Item[] = [
   it('aut_1', 'The way I spend my days is genuinely my choice.', 'autonomy', false, ['ryan2000'], { chapter: 'patterns' }),
   it('aut_2', 'I am living a life someone else designed for me.', 'autonomy', true, ['ryan2000'], { chapter: 'patterns' }),
   it('aut_3', 'I say yes to things I want to say no to.', 'autonomy', true, ['ryan2000'], { chapter: 'patterns' }),
+  /* Competence and agency each had two items, which put them permanently below the three needed
+     for a composite — so two of the three self-determination needs could never be scored, never
+     entered the overall number, and appeared in every reader's "left thin" line forever. Both also
+     carry exclusion claims ("you are not incapable", "you are not lazy") that could therefore never
+     fire. A dimension that cannot reach its own threshold is not a measurement. */
   it('com_1', 'I am good at the things that matter to me.', 'competence', false, ['ryan2000'], { chapter: 'patterns' }),
   it('com_2', 'Lately I have felt out of my depth most of the time.', 'competence', true, ['ryan2000'], { chapter: 'patterns' }),
+  it('com_3', 'When I take on something new, I expect to get the hang of it.', 'competence', false, ['ryan2000'], { chapter: 'patterns' }),
+  it('com_4', 'I stay away from things I might turn out to be bad at.', 'competence', true, ['ryan2000', 'kegan2009'], { chapter: 'patterns' }),
   it('rel_1', 'There is at least one person I could call at 3am.', 'relatedness', false, ['ryan2000'], { chapter: 'patterns' }),
   it('rel_2', 'I feel lonely even around people.', 'relatedness', true, ['ryan2000'], { chapter: 'patterns' }),
   it('age_1', 'What happens in my life is mostly a result of what I do.', 'agency', false, ['ryan2000', 'kegan2009'], { chapter: 'patterns' }),
   it('age_2', 'Things happen to me and I react.', 'agency', true, ['ryan2000'], { chapter: 'patterns' }),
+  it('age_3', 'When something in my life needs to change, I am the one who changes it.', 'agency', false, ['ryan2000', 'kegan2009'], { chapter: 'patterns' }),
+  it('age_4', 'I tend to wait and see whether a situation sorts itself out.', 'agency', true, ['ryan2000'], { chapter: 'patterns' }),
 
   /* future self continuity — similarity, not just aspiration (Hershfield) */
   it('fut_1', 'The person I will be in ten years feels like me.', 'futureSelfContinuity', false, ['hershfield2011'], { chapter: 'future' }),

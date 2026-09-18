@@ -402,7 +402,7 @@ export function exceptionFindings(scored: Scored[], answers: AnswerMap): Finding
 
     out.push({
       id: fid('exc'),
-      kind: 'exclusion',
+      kind: 'exception',
       statement:
         `${d.label} came out at ${s.pomp}%, and that is the part of this you already know about yourself. ` +
         `But one answer inside it does not match the rest: "${item.text}" — and there you went ${gap} points against your own pattern. ` +
@@ -561,6 +561,122 @@ export function selfWorkFindings(scored: Scored[], answers: AnswerMap): Finding[
     ...immunityFindings(scored, answers),
     ...assumptionFindings(scored, answers),
     ...exceptionFindings(scored, answers),
+    ...selfExclusionFindings(scored),
     ...futureFindings(scored, answers),
+  ]
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   5 · WHERE YOU ARE WRONG ABOUT YOURSELF — the ipsative exclusion.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/**
+ * The exclusion rules in profile.ts are absolute: they need a score above a fixed line, so for a
+ * person sitting in the middle of every scale none of them fire and "What you are not" disappears
+ * from the report entirely. That is honest and it is also a loss, because ruling out the wrong
+ * theory is the one thing an assessment can do that rumination cannot — nobody arrives at a
+ * self-knowledge report without a theory of what is wrong with them, and most of those theories
+ * are wrong in a way the person cannot see from the inside.
+ *
+ * So this one is IPSATIVE: it reads the strongest thing in their own profile and eliminates the
+ * explanation that thing rules out. It is person-specific by construction — the dimension is
+ * theirs, the number is theirs — and unlike the absolute rules it has something to say about
+ * anybody whose profile is not perfectly flat.
+ */
+const RULES_OUT: Partial<Record<DimensionId, string>> = {
+  selfConceptClarity:
+    'that you do not know yourself well enough yet. You do. More self-examination is not the missing piece, and another year of it will not produce one',
+  selfCompassion:
+    'that you need to be kinder to yourself. You already are, by your own answers — so the advice everyone gives you is aimed at a problem you do not have',
+  emotionRegulation:
+    'that you are being run by your feelings. You are not; you can hold a difficult one without it deciding what happens next. Whatever is stuck here is not emotional control',
+  rumination:
+    'that you are trapped in your own head. You can put things down, which most people who describe what you describe cannot',
+  coreBeliefSelf:
+    'that this is low self-worth. What you believe about yourself underneath came out intact, which means the difficulty is somewhere other than the place everyone will point at first',
+  coreBeliefOther:
+    'that you have stopped trusting people. You have not, and that is worth knowing, because it means the distance you are feeling is not coming from suspicion',
+  autonomy:
+    'that you are living somebody else\u2019s life. You are not — the direction is genuinely yours, which rules out the explanation that would otherwise be the obvious one',
+  competence:
+    'that you are not capable enough. You are good at what matters to you, and a plan built on skill-building would be solving something that is not broken',
+  relatedness:
+    'that you are alone in this. You are not, in fact; there are people. What is happening is about what reaches them, not whether they exist',
+  agency:
+    'that things just happen to you. You act, and you know you act, which eliminates the most disabling story available',
+  lifeSatisfaction:
+    'that everything is bad and this is just one more part of it. Your life as a whole is going reasonably, which locates the difficulty somewhere specific instead of everywhere',
+  attachAnxiety:
+    'that you are afraid of being left. That fear is genuinely low in you, and any reading built on it will miss you entirely',
+  attachAvoidance:
+    'that you keep people at a distance. You do not — you can let someone see you badly, which is the thing most people in your position cannot do',
+  futureSelfContinuity:
+    'that you cannot picture a future. You can, and you feel like the person in it, which removes the explanation that usually does the most damage',
+  valuesLived:
+    'that you do not know what you want. Your week already reflects it, which is rarer than it sounds',
+}
+
+/**
+ * Two registers, because the same sentence is not honest at both ends.
+ *
+ * Above CONFIDENT, the dimension is genuinely strong and eliminating an explanation on it is a
+ * real claim. Between FLOOR and CONFIDENT it is only the person's own best area — which still
+ * rules something out, but "you are strong here" would be overclaiming, and a report that
+ * overclaims once is not trusted on anything else. Below FLOOR nothing is said at all.
+ */
+const IPSATIVE_FLOOR = 48
+const IPSATIVE_CONFIDENT = 62
+
+export function selfExclusionFindings(scored: Scored[]): Finding[] {
+  const ranked = scored
+    .filter((s) => !s.thin)
+    .map((s) => ({ s, oriented: DIM_BY_ID[s.id].higherIsBetter ? s.pomp : 100 - s.pomp }))
+    .filter((x) => x.oriented >= IPSATIVE_FLOOR && RULES_OUT[x.s.id])
+    .sort((a, b) => b.oriented - a.oriented)
+
+  const top = ranked[0]
+  if (!top) return []
+
+  const d = DIM_BY_ID[top.s.id]
+  const second = ranked[1]
+
+  const confident = top.oriented >= IPSATIVE_CONFIDENT
+
+  /* A reversed dimension cannot be announced as a strength by its own label. "The part of you
+     holding up best is fear of being left, at 50%" reads as the opposite of what it measures, so
+     the two directions get two sentences. */
+  const lead = d.higherIsBetter
+    ? `${d.label.toLowerCase()}, at ${top.s.pomp}%`
+    : `how little ${d.label.toLowerCase()} there is in you — you came out at ${top.s.pomp}% on it, and low is the direction that helps`
+  const secondLead = second
+    ? (DIM_BY_ID[second.s.id].higherIsBetter
+        ? `${DIM_BY_ID[second.s.id].label.toLowerCase()} at ${second.s.pomp}%`
+        : `how little ${DIM_BY_ID[second.s.id].label.toLowerCase()} there is in you, at ${second.s.pomp}%`)
+    : ''
+
+  const also = second ? ` The same goes, a little less strongly, for ${secondLead}.` : ''
+
+  const statement = confident
+    ? `The part of you that is holding up best is ${lead}. ` +
+      `That is worth saying out loud because of what it rules out, and ruling something out is the only kind of claim that can be caught being wrong. ` +
+      `Whatever is going on with you, it is not ${RULES_OUT[top.s.id]}.${also} ` +
+      `You have probably spent real time on that explanation. You can stop.`
+    : `You did not come out strong anywhere, and we are not going to pretend otherwise. But the part holding up best is ${lead}, and that still rules something out. ` +
+      `It does not mean this part of you is in good shape. It means it is not where the weight is — so whatever is going on, it is not ${RULES_OUT[top.s.id]}.${also} ` +
+      `On a day when everything feels equally wrong, knowing one place the problem is not is more useful than it sounds, because it is the difference between a search and a spiral.`
+
+  return [
+    {
+      id: fid('ips'),
+      kind: 'exclusion',
+      statement,
+      notability: confident ? 0.7 : 0.6,
+      baseRate: 0.18,
+      finnLevel: 2,
+      evidence: [dimensionEvidence(top.s), ...(second ? [dimensionEvidence(second.s)] : [])],
+      sources: [...d.sources.slice(0, 2), 'finn1997'],
+      dimensions: [top.s.id, ...(second ? [second.s.id] : [])],
+      accepted: true,
+    },
   ]
 }

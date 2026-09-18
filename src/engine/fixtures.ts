@@ -52,7 +52,8 @@ export function fill(base: AnswerMap, raw: number, only?: (i: Item) => boolean):
   return out
 }
 
-function input(context: Context, answers: AnswerMap, safetyAnswers: AnswerMap = {}, skipped: string[] = []): AssessmentInput {
+/** Exported so personas can live in more than one file without duplicating the shape. */
+export function makeInput(context: Context, answers: AnswerMap, safetyAnswers: AnswerMap = {}, skipped: string[] = []): AssessmentInput {
   return { context, answers, safetyAnswers, skipped, startedAt: 0, finishedAt: 2_700_000 }
 }
 
@@ -103,8 +104,15 @@ export function arjun(): AssessmentInput {
   put('txt_worst', 'When I told her my father had said no for the last time and she just went quiet and said okay. She did not fight for it. That okay is still in my head.')
   put('txt_friend', 'I would tell him it is already over and he is just paying interest on it. I would tell him that he is not saving her by staying, he is just making the ending more expensive for both of them.')
   put('txt_fear', 'That I wasted the best years I had and I did it to myself, and that she will be fine and I will not.')
+  put('con_help', 'decide')
+  put('con_story', 'We have been together since first year. My father has said no twice and the second time he said it in front of her brother. She has stopped bringing it up which somehow feels worse than when she used to cry about it. I am in my second year again because I failed two papers last year. I do not know if I am staying because I love her or because leaving would make me the person who did this to her.')
+  put('con_tried', 'I talked to my father twice, the second time with my mother there, and it went worse than the first. I tried waiting it out for about eight months thinking he would soften. I have not told her about either conversation.')
+  put('con_change', 'That my father would just meet her once without deciding anything in advance.')
+  put('gap_self', 4); put('gap_family', 1)
+  put('gap_sayable', 1); put('gap_regulated', 2); put('gap_contact', 5)
+  put('fil_recip', 4); put('fil_auth', 5); put('fil_why', 1)
 
-  return input({ ...CTX, stage: 'dating', ageBand: '18-21' }, a, {}, ['sco_4', 'rum_4'])
+  return makeInput({ ...CTX, stage: 'dating', ageBand: '18-21' }, a, {}, ['sco_4', 'rum_4'])
 }
 
 /**
@@ -145,8 +153,15 @@ export function priya(): AssessmentInput {
   put('txt_worst', 'My mother crying in the kitchen and saying she would not be able to show her face, and me not being able to say anything back.')
   put('txt_friend', 'I would ask her whether the problem is the man or the people around the man, because those need completely different answers.')
   put('txt_fear', 'That I will pick one and lose the other either way.')
+  put('con_help', 'understand')
+  put('con_story', 'There is nothing wrong between us. That is what nobody around me can hear. He is from a different community and my mother has stopped saying his name. My relatives have started calling her directly with other rishtas. We have been together five years and we are both tired in a way that has nothing to do with each other.')
+  put('con_tried', 'I told my parents properly about a year ago. My mother cried and my father has not discussed it since. I involved my chacha who is usually reasonable and that made my mother feel ganged up on. We have mostly kept quiet about it for six months.')
+  put('con_change', 'That my mother would ask me one question about him instead of about what people will say.')
+  put('gap_self', 5); put('gap_family', 2)
+  put('gap_sayable', 2); put('gap_regulated', 2); put('gap_contact', 4)
+  put('fil_recip', 5); put('fil_auth', 2); put('fil_why', 3)
 
-  return input({ ...CTX, stage: 'dating', ageBand: '26-30' }, a)
+  return makeInput({ ...CTX, stage: 'dating', ageBand: '26-30' }, a)
 }
 
 /**
@@ -173,7 +188,11 @@ export function aarti(): AssessmentInput {
   put('txt_worst', 'Realising at my own birthday dinner that I had nothing to say to him that was not logistics.')
   put('txt_friend', 'I would tell her that fine is not the same as alive and she is allowed to want more than fine.')
   put('txt_fear', 'That this is just what marriage is and I am the ungrateful one.')
-  return input({ ...CTX, stage: 'married', durationBucket: '5-10y', familyInPlay: true, ageBand: '31-40' }, a)
+  put('con_help', 'repair')
+  put('con_story', 'Nothing is wrong. We do not fight. We run a household well. I looked at him across the table on my birthday and could not think of one thing to say that was not about the kids or the flat. I do not want to leave. I want to be a person again inside this.')
+  put('con_tried', 'I suggested a weekly date night and we did it four times and then it became another thing to organise. I tried talking to him about it and he said he was happy and asked what was wrong with me, which was not unkind, he genuinely did not see it.')
+  put('con_change', 'One hour where nobody needs anything from me and I do not feel guilty about it.')
+  return makeInput({ ...CTX, stage: 'married', durationBucket: '5-10y', familyInPlay: true, ageBand: '31-40' }, a)
 }
 
 export function meera(): AssessmentInput {
@@ -195,7 +214,11 @@ export function meera(): AssessmentInput {
   put('txt_worst', 'Telling him I needed space and watching his face, and then spending the whole night making it up to him instead of taking the space.')
   put('txt_friend', 'I would tell her that needing room is not the same as not loving someone, and that she has never once said it out loud without immediately taking it back.')
   put('txt_fear', 'That the quiet I want is actually me having already left.')
-  return input({ ...CTX, stage: 'married', durationBucket: '5-10y', familyInPlay: true, ageBand: '31-40' }, a)
+  put('con_help', 'repair')
+  put('con_story', 'He wants to talk everything through the moment it happens and I need to go quiet first or I say things I do not mean. He reads the quiet as me withdrawing from him, so he follows me into it, and then I actually do withdraw. We have had the same argument about the argument for two years.')
+  put('con_tried', 'We took a break from discussing it for a month, which just meant it built up. I have tried explaining that I need space and then spent the whole night reassuring him instead of taking it.')
+  put('con_change', 'That I could say I need twenty minutes without it becoming a conversation about whether I love him.')
+  return makeInput({ ...CTX, stage: 'married', durationBucket: '5-10y', familyInPlay: true, ageBand: '31-40' }, a)
 }
 
 /** ROHIT — the self lens. Know Thyself, no relationship in it at all. */
@@ -218,7 +241,7 @@ export function rohit(): AssessmentInput {
   put('fut_write', 'I wake up somewhere with light in the morning, I work on something that is mine, I am not performing for anyone at breakfast.')
   put('fut_gap', 'The ability to disappoint people I love and survive it.')
   put('fut_block', 'That if I stop being useful to everyone there is no reason for anyone to keep me around.')
-  return input({ lens: 'self', voice: 'solo', stage: 'dating', help: ['understand'], durationBucket: null, familyInPlay: true, ageBand: '22-25' }, a)
+  return makeInput({ lens: 'self', voice: 'solo', stage: 'dating', help: ['understand'], durationBucket: null, familyInPlay: true, ageBand: '22-25' }, a)
 }
 
 /** A safety-disclosing variant of arjun's partner-case, used ONLY for the LAW 5 test. */

@@ -1,10 +1,11 @@
 import { describe, it, expect } from 'vitest'
 import { derive, withReaction, fingerprint } from './derive'
-import { itemPomp, scoreDimension, composite, scoreAll } from './score'
+import { itemPomp, scoreDimension, composite, scoreAll, MIN_ITEMS_FOR_COMPOSITE } from './score'
 import { DIMENSIONS, DIM_BY_ID, deriveWeight, weightProvenance, bandOf } from './dimensions'
 import { SOURCES, cite } from './sources'
 import { readSafety, selfShapeOf, SELF_SHAPE_COPY } from './axes'
 import { l1WordShare, L1_CAP } from './plan'
+import { ATTITUDE_BEHAVIOUR_RULES, findContradictions } from './contradictions'
 import { PRACTICES, PRACTICE_BY_ID } from './practices'
 import { ALL_ITEMS, SAFETY_ITEMS, ITEM_BY_ID, runningOrder, totalItems } from '../items'
 import { arjun, priya, aarti, meera, rohit, withSafetyDisclosure, withoutSafetyDisclosure, ans, CTX } from './fixtures'
@@ -1034,4 +1035,58 @@ describe('a number is never described in the wrong direction', () => {
       expect(new Set(reasons).size, 'two steps share a reason').toBe(reasons.length)
     }
   })
+})
+
+describe('every dimension can actually reach its own threshold', () => {
+  it('no dimension is thin by construction', () => {
+    const count = new Map<string, number>()
+    for (const i of ALL_ITEMS) if (i.dimension) count.set(i.dimension, (count.get(i.dimension) ?? 0) + 1)
+    const starved = DIMENSIONS
+      .filter((d) => (count.get(d.id) ?? 0) < MIN_ITEMS_FOR_COMPOSITE)
+      .map((d) => `${d.id} has ${count.get(d.id) ?? 0} items, needs ${MIN_ITEMS_FOR_COMPOSITE}`)
+    // Competence and agency each had two. Both were therefore excluded from every composite ever
+    // computed, named in every reader's "left thin" line, and unable to fire the exclusion claims
+    // that depend on them. A dimension that cannot reach its own threshold is not a measurement.
+    expect(starved, starved.join(' | ')).toEqual([])
+  })
+})
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   A CONTRADICTION MUST BE ONE.
+
+   Two of these rules fired on answers that agreed: the most committed person in the fixture set
+   was told that wanting it to last and never thinking of ending it were a hundred-point split
+   inside her own answers. That sentence is the report's "aha", and the reader knows what they
+   answered — getting it wrong there costs every other claim on the page.
+   ══════════════════════════════════════════════════════════════════════════ */
+describe('attitude-versus-behaviour rules only fire on a real collision', () => {
+  /** Every combination of the two items, so the rule is checked against all four corners. */
+  const corners: [number, number][] = [[1, 1], [1, 5], [5, 1], [5, 5]]
+
+  for (const rule of ATTITUDE_BEHAVIOUR_RULES) {
+    it(`${rule.attitude} vs ${rule.behaviour} — fires on exactly the corner it describes`, () => {
+      const fired: string[] = []
+      for (const [av, bv] of corners) {
+        const answers: AnswerMap = {
+          [rule.attitude]: ans(rule.attitude, av),
+          [rule.behaviour]: ans(rule.behaviour, bv),
+        }
+        const found = findContradictions(answers, [], [], CTX).filter((f) => f.id.startsWith('f:attbeh:'))
+        if (found.length) fired.push(`${av}/${bv}`)
+      }
+      // Exactly one of the four corners is the collision this rule is written about.
+      expect(fired.length, `fired on ${fired.join(', ') || 'nothing'}`).toBe(1)
+
+      // And on that corner, both sides must read as firmly held rather than as a shrug.
+      const [av, bv] = fired[0]!.split('/').map(Number) as [number, number]
+      const answers: AnswerMap = {
+        [rule.attitude]: ans(rule.attitude, av),
+        [rule.behaviour]: ans(rule.behaviour, bv),
+      }
+      const f = findContradictions(answers, [], [], CTX).find((x) => x.id.startsWith('f:attbeh:'))!
+      const held = [...f.statement.matchAll(/(\d+)%/g)].map((m) => Number(m[1]))
+      expect(held.length, 'the statement reports both endorsements').toBe(2)
+      for (const h of held) expect(h, `a ${h}% endorsement is not a collision`).toBeGreaterThanOrEqual(66)
+    })
+  }
 })

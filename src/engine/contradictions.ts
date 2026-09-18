@@ -190,39 +190,62 @@ function residuals(scored: Scored[], answers: AnswerMap): Finding[] {
  * The sharpest kind: a stated position colliding with a reported behaviour.
  * "I am clear I want to be in this" next to "I think about ending it, often."
  */
-const ATTITUDE_BEHAVIOUR: { attitude: string; behaviour: string; write: (a: string, b: string) => string; sources: string[] }[] = [
+/**
+ * Each rule states which END of each item's own scale it needs, explicitly.
+ *
+ * This used to be implicit — "both items point the good way after reversal, so a real collision is
+ * high-vs-low" — and that is not true. `itemPomp` points along the item's DIMENSION, and a
+ * dimension is not always oriented toward the good end: Ambivalence and Constraint both score
+ * high for the thing you do not want. So two rules fired on answers that agreed with each other,
+ * and the most committed person in the fixture set was told that wanting it to last and never
+ * thinking of ending it were "a 100-point split inside a single person's answers".
+ *
+ * Presenting agreement as contradiction is worse than saying nothing. It is the report's "aha",
+ * the reader knows their own answers, and getting it wrong there costs every other claim on the
+ * page. So the direction is now written down per rule and tested against the sentence it prints.
+ *
+ * 'high' and 'low' are on the item's own construct scale, after `itemPomp` has applied reversal.
+ */
+const ATTITUDE_BEHAVIOUR: {
+  attitude: string
+  behaviour: string
+  needAttitude: 'high' | 'low'
+  needBehaviour: 'high' | 'low'
+  write: (a: string, b: string) => string
+  sources: string[]
+}[] = [
   {
-    attitude: 'ded_1', behaviour: 'amb_1',
+    attitude: 'ded_1', behaviour: 'amb_1', needAttitude: 'high', needBehaviour: 'high',
     write: (a, b) => `You said you want this to last — ${a.toLowerCase()}. On how often you think about ending it, you said ${b.toLowerCase()}. Both of those are your answers, given minutes apart. Most people never see the two of them in the same place.`,
     sources: ['joel2018', 'miller2013'],
   },
   {
-    attitude: 'amb_3', behaviour: 'amb_2',
+    attitude: 'amb_3', behaviour: 'amb_2', needAttitude: 'low', needBehaviour: 'high',
     write: (a, b) => `You said you are clear you want to be in this — ${a.toLowerCase()} — and separately, that you have imagined life without them and felt relief: ${b.toLowerCase()}. Relief is not the same as wanting out. It is information about load, not about love.`,
     sources: ['joel2018'],
   },
   {
-    attitude: 'tru_1', behaviour: 'tru_2',
+    attitude: 'tru_1', behaviour: 'tru_2', needAttitude: 'high', needBehaviour: 'low',
     write: (a, b) => `On being able to predict them you answered ${a.toLowerCase()}. On checking up on them in ways you would not want them to know about, you answered ${b.toLowerCase()}. Checking is what we do when a part of us has already stopped predicting.`,
     sources: ['rempel1985'],
   },
   {
-    attitude: 'cons_4', behaviour: 'sat_1',
+    attitude: 'cons_4', behaviour: 'sat_1', needAttitude: 'high', needBehaviour: 'low',
     write: (a, b) => `You said staying is what loyalty means — ${a.toLowerCase()}. On whether being in this currently feels good, you said ${b.toLowerCase()}. You are running a definition of love that does not require the relationship to feel good, and you have never had to say that out loud before.`,
     sources: ['kegan2009', 'rusbult1995'],
   },
   {
-    attitude: 'alt_1', behaviour: 'alt_4',
+    attitude: 'alt_1', behaviour: 'alt_4', needAttitude: 'high', needBehaviour: 'low',
     write: (a, b) => `You said that if this ended you would be okay eventually — ${a.toLowerCase()}. You also said the idea of being single frightens you more than staying unhappy: ${b.toLowerCase()}. The first is what you believe about yourself. The second is what is actually deciding.`,
     sources: ['rusbult1995', 'rusbult1998'],
   },
   {
-    attitude: 'cbs_4', behaviour: 'cbs_5',
+    attitude: 'cbs_4', behaviour: 'cbs_5', needAttitude: 'high', needBehaviour: 'low',
     write: (a, b) => `You said you are allowed to take up space — ${a.toLowerCase()}. You also said your needs come after everyone else's and that is just how it is: ${b.toLowerCase()}. The first is the belief you hold. The second is the rule you run.`,
     sources: ['kegan2009', 'ryan2000'],
   },
   {
-    attitude: 'sco_1', behaviour: 'sco_2',
+    attitude: 'sco_1', behaviour: 'sco_2', needAttitude: 'high', needBehaviour: 'low',
     write: (a, b) => `On talking to yourself the way you would talk to a friend, you said ${a.toLowerCase()}. On being harder on yourself than anyone else is, you said ${b.toLowerCase()}. Those two cannot both be the operating rule.`,
     sources: ['neff2003'],
   },
@@ -230,6 +253,9 @@ const ATTITUDE_BEHAVIOUR: { attitude: string; behaviour: string; write: (a: stri
 
 const HIGH = 66
 const LOW = 34
+
+/** Exported for the test that checks each rule only fires when its own sentence is true. */
+export const ATTITUDE_BEHAVIOUR_RULES = ATTITUDE_BEHAVIOUR
 
 function attitudeBehaviour(answers: AnswerMap): Finding[] {
   const out: Finding[] = []
@@ -239,8 +265,16 @@ function attitudeBehaviour(answers: AnswerMap): Finding[] {
     if (!a || !b || typeof a.value !== 'number' || typeof b.value !== 'number') continue
     const ap = itemPomp(rule.attitude, a.value)
     const bp = itemPomp(rule.behaviour, b.value)
-    // Both items point "the good way" after reversal, so a real collision is high-vs-low.
-    if (!(ap >= HIGH && bp <= LOW)) continue
+    const meets = (v: number, need: 'high' | 'low') => (need === 'high' ? v >= HIGH : v <= LOW)
+    if (!meets(ap, rule.needAttitude) || !meets(bp, rule.needBehaviour)) continue
+
+    /* How hard each of the two was endorsed, in the direction the rule needs.
+       The old number was the raw distance between two POMP scores, which for a pair whose
+       dimensions run in opposite directions was a measure of how much they AGREED. What makes a
+       collision notable is that both sides are held firmly — so that is what gets reported. */
+    const aStrength = Math.round(rule.needAttitude === 'high' ? ap : 100 - ap)
+    const bStrength = Math.round(rule.needBehaviour === 'high' ? bp : 100 - bp)
+    const held = Math.min(aStrength, bStrength)
 
     const ia = ITEM_BY_ID[rule.attitude]!
     const ib = ITEM_BY_ID[rule.behaviour]!
@@ -253,8 +287,8 @@ function attitudeBehaviour(answers: AnswerMap): Finding[] {
       kind: 'contradiction',
       statement:
         rule.write(renderAnswer(ia, a.value).replace('You chose: ', ''), renderAnswer(ib, b.value).replace('You chose: ', '')) +
-        ` On the scale those two sit on, that is ${Math.round(ap)}% against ${Math.round(bp)}% — a ${Math.round(ap - bp)}-point split inside a single person's answers, given minutes apart.`,
-      notability: Math.min(1, (ap - bp) / 80),
+        ` You held the first at ${aStrength}% and the second at ${bStrength}%, minutes apart, in the same sitting. Neither was a shrug.`,
+      notability: Math.min(1, held / 100),
       baseRate: 0.14,
       finnLevel: 3,
       evidence: [ea, eb],

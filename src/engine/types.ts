@@ -203,6 +203,7 @@ export type FindingKind =
   | 'exclusion'       // what is demonstrably NOT true of them
   | 'partnerGap'      // couple mode: the two people disagree
   | 'assumption'      // a belief of theirs made falsifiable, with the smallest test that would check it
+  | 'exception'       // a place in their own answers where their own pattern did not run
 
 /**
  * Finn's levels of feedback (Therapeutic Assessment). L1 confirms what they already believe,

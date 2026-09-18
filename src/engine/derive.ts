@@ -7,6 +7,8 @@ import { planSections, limitsFor } from './plan'
 import { ITEM_BY_ID } from '../items'
 import { choosePractices } from './prescribe'
 import { selfWorkFindings, resetSelfWorkIds, assumptionTest } from './selfwork'
+import { concernFindings, resetConcernIds } from './concern'
+import { familyFindings, resetFamilyIds } from './family'
 
 export const PACKET_VERSION = '3.0.0'
 
@@ -24,6 +26,8 @@ export function derive(input: AssessmentInput): EvidencePacket {
   resetFindingIds()
   resetProfileIds()
   resetSelfWorkIds()
+  resetConcernIds()
+  resetFamilyIds()
 
   const { context, answers, safetyAnswers, skipped } = input
 
@@ -31,6 +35,13 @@ export function derive(input: AssessmentInput): EvidencePacket {
   const axes = computeAxes(context, dimensions, safetyAnswers)
 
   const findings: Finding[] = [
+    /* What they actually walked in with, in their own words. First, because a report that has
+       not shown it read the problem has not earned anything it says afterwards. */
+    ...concernFindings(answers, context),
+    /* The collision between what they want and what their family expects: the paired distance,
+       the two halves of filial piety kept apart, and what they believe disagreeing would cost.
+       See family.ts — and the rule that no side is ever taken against anybody's family. */
+    ...familyFindings(answers, context),
     ...findContradictions(answers, dimensions, skipped, context),
     ...configuralFindings(dimensions),
     ...exclusionFindings(dimensions, context),
@@ -43,9 +54,9 @@ export function derive(input: AssessmentInput): EvidencePacket {
   ].sort((a, b) => b.notability - a.notability)
 
   const quotes = collectQuotes(input)
-  const plan = planSections(context, findings, axes, dimensions)
+  const plan = planSections(context, findings, axes, dimensions, answers)
   const limits = limitsFor(context, axes, dimensions)
-  const practices = choosePractices(context, dimensions, findings, axes)
+  const practices = choosePractices(context, dimensions, findings, axes, answers)
   const assumption = context.lens === 'self' ? assumptionTest(answers) : null
 
   return {

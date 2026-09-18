@@ -1,6 +1,7 @@
-import type { Finding, SectionPlan, Context, FourAxes, Scored } from './types'
+import type { Finding, SectionPlan, Context, FourAxes, Scored, AnswerMap } from './types'
 import { DIM_BY_ID } from './dimensions'
 import { slotsFor, type Slot } from './slots'
+import { familyGapLive } from './family'
 
 /**
  * SECTION PLANNING — computed, never prompted.
@@ -23,6 +24,14 @@ const L1_WORD_CAP = 0.3
 
 /** Findings a slot is eligible to anchor. */
 function eligible(slot: Slot, f: Finding, axes: FourAxes): boolean {
+  /* The family findings are reserved for the family section.
+     They are Level-3 contradictions and configurals, so without this the "aha" slot and the DEEP
+     formulation claimed them first and the section actually titled "You, them, and everyone else
+     in the room" was left with whatever was spare. The filial-piety split in particular is the
+     most useful sentence available to somebody caught between a family and a partner, and it
+     belongs where they will look for it. */
+  if (f.id.startsWith('f:fam:') && slot.wants !== 'family' && slot.wants !== 'rest') return false
+
   switch (slot.wants) {
     case 'none': return false
     case 'strengths': return f.finnLevel === 1 || (f.kind === 'extreme' && f.notability > 0.4)
@@ -31,10 +40,12 @@ function eligible(slot: Slot, f: Finding, axes: FourAxes): boolean {
     case 'deep': return f.finnLevel >= 2 && (f.kind === 'contradiction' || f.kind === 'configural')
     case 'hold': return f.dimensions.some((d) => d === 'constraint' || d === 'alternatives' || d === 'familyApproval') || axes.shape === 'held-by-cost'
     case 'exclusion': return f.kind === 'exclusion'
+    case 'exception': return f.kind === 'exception'
+    case 'concern': return f.id.startsWith('f:con:')
     case 'future': return f.kind !== 'assumption' && (f.dimensions.includes('futureSelfContinuity') || f.dimensions.includes('valuesLived'))
-    case 'family': return f.dimensions.includes('familyApproval') || f.dimensions.includes('constraint')
+    case 'family': return f.id.startsWith('f:fam:') || f.dimensions.includes('familyApproval')
     case 'assumption': return f.kind === 'assumption'
-    case 'rest': return f.kind !== 'assumption'
+    case 'rest': return f.kind !== 'assumption' && !f.id.startsWith('f:con:')
   }
 }
 
@@ -43,8 +54,16 @@ function eligible(slot: Slot, f: Finding, axes: FourAxes): boolean {
  * Evidence-gated, so the section appears for the person who is living it and not for the person
  * who is not — regardless of which problem either of them arrived with.
  */
-function hasFamilyGap(findings: Finding[], scored: Scored[], ctx: Context): boolean {
+function hasFamilyGap(findings: Finding[], scored: Scored[], ctx: Context, answers: AnswerMap): boolean {
   if (!ctx.familyInPlay) return false
+
+  /* Expectation, not approval. This used to key on the familyApproval score, which meant a man
+     whose delighted parents want the couple to move into their ground floor was reported as
+     having no family problem, in a situation that is nothing but a family problem. Approval and
+     obligation are different things and the gate now asks about the second. */
+  if (familyGapLive(answers, ctx)) return true
+  if (findings.some((f) => f.accepted && f.id.startsWith('f:fam:'))) return true
+
   const fam = scored.find((s) => s.id === 'familyApproval' && !s.thin)
   if (fam && fam.pomp <= 45) return true
   return findings.some((f) => f.accepted && f.dimensions.includes('familyApproval'))
@@ -55,11 +74,12 @@ export function planSections(
   findings: Finding[],
   axes: FourAxes,
   _scored: Scored[],
+  answers: AnswerMap = {},
 ): SectionPlan[] {
   /* Which sections exist at all depends on the help they asked for, and on whether the evidence
      earns the family section. See slots.ts — this is the structural answer to "Aaina is not a
      compatibility checker". */
-  const familyGap = hasFamilyGap(findings, _scored, ctx)
+  const familyGap = hasFamilyGap(findings, _scored, ctx, answers)
   const slots = slotsFor(ctx.lens, ctx.help, familyGap)
   const pool = [...findings].filter((f) => f.accepted).sort((a, b) => b.notability - a.notability)
   const used = new Set<string>()
@@ -84,7 +104,9 @@ export function planSections(
 
   for (const slot of ordered) {
     if (slot.wants === 'none') { assignments.set(slot.id, []); continue }
-    const take = slot.wants === 'theme' ? 1 : slot.wants === 'rest' ? 3 : 2
+    // The family section carries three: the paired distance, the filial split, and what they
+    // believe disagreeing would cost. All three are one argument and splitting them loses it.
+    const take = slot.wants === 'theme' ? 1 : slot.wants === 'rest' || slot.wants === 'family' ? 3 : 2
     const picked = pool
       .filter((f) => !used.has(f.id) && eligible(slot, f, axes))
       .slice(0, take)

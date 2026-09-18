@@ -1,6 +1,7 @@
-import type { Context, Scored, Finding, FourAxes, SelectedPractice, DimensionId } from './types'
+import type { Context, Scored, Finding, FourAxes, SelectedPractice, DimensionId, AnswerMap } from './types'
 import { DIM_BY_ID } from './dimensions'
 import { selectPractices, PRACTICE_BY_ID, type Signal } from './practices'
+import { alreadyTried } from './concern'
 
 /**
  * PRESCRIBING — turning an analysis into a staged plan.
@@ -42,6 +43,7 @@ export function choosePractices(
   scored: Scored[],
   findings: Finding[],
   axes: FourAxes,
+  answers: AnswerMap = {},
 ): SelectedPractice[] {
   const weakest = weakestDimensions(scored)
 
@@ -67,6 +69,14 @@ export function choosePractices(
      steps all say "you are at 15% on how clearly you see yourself" is a list wearing a sequence's
      clothes. Each practice claims the worst dimension it treats that nothing earlier has claimed. */
   const claimed = new Set<DimensionId>()
+
+  /* They told us what they already tried. Handing it back as a suggestion is the fastest way to
+     prove nobody read it, so where a chosen practice is a version of something they attempted,
+     the reason LEADS with that and says what is different about this version. */
+  const tried = alreadyTried(answers)
+  /* Said once. Repeating "you said you already tried a version of this" under three separate
+     steps stops sounding like listening and starts sounding like a mail merge. */
+  let acknowledgedOnce = false
 
   return chosen.map(({ practice: p, substitutedFor }) => {
     // The finding this practice answers — so the plan points back at the analysis.
@@ -100,11 +110,17 @@ export function choosePractices(
       ...(finding ? finding.evidence.slice(0, 2).map((e) => e.id) : []),
     ]
 
+    const priorAttempt = acknowledgedOnce ? undefined : tried.get(p.id)
+    if (priorAttempt) acknowledgedOnce = true
+    const acknowledged = priorAttempt
+      ? `You said you have already tried a version of this and that it did not get you anywhere, so it matters that ${priorAttempt}. ${because}`
+      : because
+
     return {
       practiceId: p.id,
       because: substitutedFor
-        ? `${substitutedFor.why} So instead of "${substitutedFor.title}", this. ${because}`
-        : because,
+        ? `${substitutedFor.why} So instead of "${substitutedFor.title}", this. ${acknowledged}`
+        : acknowledged,
       findingId: finding?.id ?? null,
       evidenceIds,
     }

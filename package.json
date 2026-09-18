@@ -11,7 +11,7 @@
     "test:watch": "vitest",
     "e2e": "playwright test",
     "eval:generic": "tsx scripts/eval-generic.ts",
-    "eval:live": "tsx scripts/eval-live.ts",
+    "eval:live": "tsx scripts/eval-generic.ts --live",
     "secretscan": "node scripts/secret-scan.mjs",
     "verify": "npm run secretscan && npm run build && npm test",
     "dev:api": "node scripts/dev-api.mjs",

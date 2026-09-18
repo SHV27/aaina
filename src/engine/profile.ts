@@ -210,6 +210,61 @@ const EXCLUSIONS: {
     dims: ['familyApproval', 'satisfaction'],
     sources: ['sprecher1992'],
   },
+
+  /* ── where a person is WRONG about themselves ──────────────────────────────
+   *
+   * These are the highest-value claims in the self report and the hardest to fake, because each
+   * one eliminates a specific story the reader has almost certainly been telling themselves for
+   * years. Nobody arrives at a self-knowledge assessment without a theory of what is wrong with
+   * them; the useful thing an assessment can do that rumination cannot is rule the wrong theory
+   * out. A Barnum statement never rules anything out, because ruling something out is how you
+   * get caught being wrong. */
+  {
+    id: 'not-lazy',
+    when: (g) => (g('agency')?.pomp ?? 0) >= 60 && (g('lifeSatisfaction')?.pomp ?? 100) <= 45 && !g('agency')?.thin,
+    write: (g) => `The story you have almost certainly been told, and have almost certainly repeated to yourself, is that you are not trying hard enough. Your own answers rule it out: you put what happens in your life down to what you do at ${g('agency')!.pomp}%, which is high. Somebody who believes that is not somebody who has stopped trying. Whatever is going wrong, effort is not the missing ingredient, and every plan built on "apply yourself" has been aimed at the wrong thing.`,
+    dims: ['agency', 'lifeSatisfaction'],
+    sources: ['ryan2000', 'diener1985'],
+  },
+  {
+    id: 'not-a-confidence-problem',
+    when: (g) =>
+      (g('coreBeliefSelf')?.pomp ?? 0) >= 55 &&
+      (g('autonomy')?.pomp ?? 100) <= 40 &&
+      !g('coreBeliefSelf')?.thin &&
+      !g('autonomy')?.thin,
+    write: (g) => `This is not a confidence problem, and that matters because confidence is what everyone will tell you to work on. What you believe about your own worth came out at ${g('coreBeliefSelf')!.pomp}% — that part is intact. What came out low is how much of your life is actually yours to choose, at ${g('autonomy')!.pomp}%. Those are different problems with different solutions, and doing self-esteem work on a life you did not choose is how people spend years getting nowhere while working very hard.`,
+    dims: ['coreBeliefSelf', 'autonomy'],
+    sources: ['ryan2000', 'kegan2009'],
+  },
+  {
+    id: 'not-that-you-dont-know',
+    when: (g) => (g('selfConceptClarity')?.pomp ?? 0) >= 60 && (g('rumination')?.pomp ?? 0) >= 60,
+    write: (g) => `You know who you are. Self-concept clarity came out at ${g('selfConceptClarity')!.pomp}%, which is the opposite of the problem you probably think you have. So the thinking you cannot stop is not a search for an answer you are missing — you already hold it. That reframes the whole thing: what is running is not investigation, and treating it as investigation is what keeps it running.`,
+    dims: ['selfConceptClarity', 'rumination'],
+    sources: ['campbell1996', 'treynor2003'],
+  },
+  {
+    id: 'not-incapable',
+    when: (g) => (g('competence')?.pomp ?? 0) >= 62 && (g('coreBeliefSelf')?.pomp ?? 100) <= 42 && !g('competence')?.thin,
+    write: (g) => `There is a gap here worth holding still for. You are good at what matters to you — competence at ${g('competence')!.pomp}%. And what you believe about yourself underneath came out at ${g('coreBeliefSelf')!.pomp}%. Those two are measuring different things and they disagree, which means the bad opinion is not being produced by the evidence. It is not that you have looked at your life and concluded something. The conclusion is arriving first.`,
+    dims: ['competence', 'coreBeliefSelf'],
+    sources: ['ryan2000', 'kegan2009', 'neff2003'],
+  },
+  {
+    id: 'not-alone-in-fact',
+    when: (g) => (g('relatedness')?.pomp ?? 0) >= 60 && (g('coreBeliefSelf')?.pomp ?? 100) <= 45 && !g('relatedness')?.thin,
+    write: (g) => `You are not actually without people. Connection came out at ${g('relatedness')!.pomp}%, which means somebody would pick up. That is worth separating from how it feels, because the belief that you are on your own and the fact of being on your own are different things, and only one of them is true here. What is missing is not people. It is something about what you let them see.`,
+    dims: ['relatedness', 'coreBeliefSelf'],
+    sources: ['ryan2000', 'reis2004'],
+  },
+  {
+    id: 'not-avoiding-feelings',
+    when: (g) => (g('emotionRegulation')?.pomp ?? 0) >= 60 && (g('rumination')?.pomp ?? 0) >= 62 && !g('emotionRegulation')?.thin,
+    write: (g) => `You are not somebody who runs from what they feel — handling hard feelings came out at ${g('emotionRegulation')!.pomp}%. That rules out the most common explanation for overthinking, which is that the thinking is a way of not feeling. Yours is not avoidance. You are feeling it and thinking about it, both at full volume, and that is a more tiring position than the one you have probably been diagnosing yourself with.`,
+    dims: ['emotionRegulation', 'rumination'],
+    sources: ['gross2003', 'treynor2003'],
+  },
 ]
 
 export function exclusionFindings(scored: Scored[], ctx: Context): Finding[] {
