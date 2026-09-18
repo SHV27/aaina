@@ -195,7 +195,7 @@ ok(local ? `bundle matches the local build (${local})` : `bundle ${served}`)
 
 const asset = await fetch(new URL(served, live))
 if (!asset.ok) fail(`the bundle itself returned ${asset.status}`)
-ok(`bundle loads (${(Number(asset.headers.get('content-length') ?? 0) / 1024).toFixed(0)} kB)`)
+ok(`bundle loads (${((await asset.arrayBuffer()).byteLength / 1024).toFixed(0)} kB over the wire)`)
 
 /* A 400 here is a PASS: the function ran and its validator rejected a deliberately empty body,
    which is exactly what it should do. 404 means it was never deployed. 500 usually means the key
