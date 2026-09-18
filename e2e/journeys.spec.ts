@@ -304,6 +304,119 @@ test.describe('the Know Thyself door', () => {
   })
 })
 
+test.describe('couple mode', () => {
+  /* The whole exchange happens in URL fragments, so this journey is also the proof that no
+     server is involved: the second person answers on one page, and the first person reads the
+     result on another, with nothing between them but a string. */
+
+  test('the first person is offered it only after their own reading', async ({ page }) => {
+    await seedInto(page)
+    await writerOffline(page)
+    await page.goto('/report')
+    await reportComplete(page)
+    await expect(page.getByRole('heading', { name: /There is a version of this with both of you/ })).toBeVisible()
+    await page.getByRole('link', { name: 'See how that works' }).click()
+    await expect(page.getByRole('heading', { name: /Ask them to answer too/ })).toBeVisible()
+    await shot(page, 'together-invite')
+  })
+
+  test('the invite link carries no answers', async ({ page }) => {
+    await seedInto(page)
+    await page.goto('/together')
+    const link = await page.locator('textarea[readonly]').first().inputValue()
+    expect(link).toContain('/answer#i=')
+    // arjun's most distinctive free text must not be recoverable from the invite.
+    expect(link).not.toContain('loyal')
+    expect(link.length).toBeLessThan(400)
+  })
+
+  test('the second person answers without ever seeing the first', async ({ page }) => {
+    await seedInto(page)
+    await page.goto('/together')
+    const link = await page.locator('textarea[readonly]').first().inputValue()
+    const frag = link.slice(link.indexOf('/answer'))
+
+    // A clean browser: no seeded state at all for the second person.
+    const second = await page.context().browser()!.newContext()
+    const p2 = await second.newPage()
+    await p2.goto(`http://localhost:4319${frag}`)
+
+    await expect(p2.getByRole('heading', { name: /Twenty questions/ })).toBeVisible()
+    const body = (await p2.locator('main').innerText()).toLowerCase()
+    expect(body, 'the second person can see the first one answers').not.toContain('loyal')
+    await shot(p2, 'answer-intro')
+
+    await p2.getByRole('button', { name: 'Start' }).click()
+    for (let i = 0; i < 20; i++) {
+      const b = p2.getByRole('button', { name: i % 3 === 0 ? 'Completely true' : 'A little true' }).first()
+      if (!(await b.count())) break
+      await b.click()
+      await p2.waitForTimeout(90)
+    }
+    const note = p2.locator('textarea')
+    await expect(note).toBeVisible()
+    await note.fill('I did not know you had been carrying this on your own.')
+    await p2.getByRole('button', { name: 'Finish' }).click()
+
+    await expect(p2.getByRole('heading', { name: /Send this back to them/ })).toBeVisible()
+    const reply = await p2.locator('textarea[readonly]').first().inputValue()
+    expect(reply).toContain('/together#r=')
+    await shot(p2, 'answer-done')
+
+    // Back to the first person, who pastes what arrived.
+    await page.locator('textarea').last().fill(reply)
+    await page.getByRole('button', { name: 'Add their answers' }).click()
+    await writerOffline(page)
+    await reportComplete(page)
+
+    const report = await page.locator('main').innerText()
+    expect(report).toContain('What the two of you said')
+    expect(report).toContain('I did not know you had been carrying this on your own.')
+    await shot(page, 'report-together')
+    await second.close()
+  })
+
+  test('the couple section never declares either of them right', async ({ page }) => {
+    await seedInto(page)
+    await page.addInitScript(() => {
+      const answers: Record<string, unknown> = {}
+      const ids = ['resp_1', 'amb_1', 'sat_1', 'sat_3', 'sat_5', 'app_1', 'app_2', 'resp_4',
+        'con_1', 'con_2', 'con_3', 'con_4', 'tru_1', 'tru_3', 'clo_3', 'clo_4', 'amb_3',
+        'ded_1', 'ded_2', 'gro_1']
+      ids.forEach((id, i) => { answers[id] = { itemId: id, value: (i % 5) + 1, revisions: 0, dwellMs: 0, order: i } })
+      try {
+        window.localStorage.setItem('aaina-partner-v1', JSON.stringify({ state: { answers, addedAt: Date.now() }, version: 1 }))
+      } catch { /* private mode */ }
+    })
+    await writerOffline(page)
+    await page.goto('/report')
+    await reportComplete(page)
+
+    const body = (await page.locator('main').innerText()).toLowerCase()
+    expect(body).toContain('what the two of you said')
+    for (const banned of ['you were right', 'they were wrong', 'you were wrong', 'they were right', 'proves']) {
+      expect(body, `the couple section says "${banned}"`).not.toContain(banned)
+    }
+    // and it must be honest about what a second account does not do
+    expect(body).toContain('does not make the reading more accurate')
+  })
+
+  test('erasing everything takes the other person answers with it', async ({ page }) => {
+    await seedInto(page)
+    await page.goto('/together')
+    await page.evaluate(() => {
+      window.localStorage.setItem('aaina-partner-v1', JSON.stringify({ state: { answers: { sat_1: { itemId: 'sat_1', value: 3, revisions: 0, dwellMs: 0, order: 0 } }, addedAt: 1 }, version: 1 }))
+    })
+    await page.goto('/privacy')
+    const erase = page.getByRole('button', { name: 'Erase everything now' })
+    await expect(erase).toBeVisible()
+    await erase.click()
+    await page.waitForTimeout(600)
+    const left = await page.evaluate(() => window.localStorage.getItem('aaina-partner-v1'))
+    expect(left === null || !left.includes('sat_1')).toBe(true)
+  })
+})
+
 test.describe('the pages that make the claims checkable', () => {
   test('the science page explains why there is no compatibility score', async ({ page }) => {
     await page.goto('/science')

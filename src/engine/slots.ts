@@ -23,7 +23,7 @@ export interface Slot {
   title: string
   intent: string
   words: number
-  wants: 'none' | 'strengths' | 'theme' | 'cycle' | 'deep' | 'hold' | 'exclusion' | 'exception' | 'future' | 'family' | 'aftermath' | 'assumption' | 'concern' | 'rest'
+  wants: 'none' | 'strengths' | 'theme' | 'cycle' | 'deep' | 'hold' | 'exclusion' | 'exception' | 'future' | 'family' | 'aftermath' | 'assumption' | 'concern' | 'partner' | 'rest'
   minFindings?: number
 }
 
@@ -136,6 +136,23 @@ const FAMILY: Slot = {
   minFindings: 1,
 }
 
+/**
+ * Both of you answered. Appears only when a second account actually exists.
+ *
+ * The intent is written this carefully because this is the section most easily turned into a
+ * weapon: two people read it together, and a sentence that can be heard as "here is proof I was
+ * right" costs them more than the whole report gives them.
+ */
+const TOGETHER: Slot = {
+  id: 'together',
+  title: 'What the two of you said',
+  intent:
+    'Both people answered the same questions, separately. Report the distance between the two accounts and NEVER adjudicate it — you are not in a position to say whose version is correct and you must not imply that you are. Name where they agree as plainly as where they do not; a section that is only a list of disagreements is the last thing they will ever do together like this. Where one of them guessed the other wrong, treat it as something that has not been said out loud rather than as somebody failing to pay attention. If they wrote a note to each other, quote it exactly and do not interpret it.',
+  words: 1000,
+  wants: 'partner',
+  minFindings: 1,
+}
+
 /* ────────────────────────────  the middles  ──────────────────────────── */
 
 const HOLDING: Slot = {
@@ -238,7 +255,7 @@ const MIDDLE: Record<HelpMode, Slot[]> = {
  * here sorts to the end, which is the safe direction for a slot added later.
  */
 const CANONICAL = [
-  'theme', 'pressure', 'aftermath', 'mechanism', 'cycle', 'why', 'family', 'not', 'holding',
+  'together', 'theme', 'pressure', 'aftermath', 'mechanism', 'cycle', 'why', 'family', 'not', 'holding',
   'standing', 'paths', 'read',
 ]
 const canonical = (id: string) => {
@@ -246,7 +263,7 @@ const canonical = (id: string) => {
   return i < 0 ? CANONICAL.length : i
 }
 
-export function slotsFor(lens: Lens, help: HelpMode[], familyGap: boolean): Slot[] {
+export function slotsFor(lens: Lens, help: HelpMode[], familyGap: boolean, partner = false): Slot[] {
   if (lens === 'self') return SELF_SLOTS
 
   // Never trust the shape of persisted state: an old store, a hand-edited link, a bad migration.
@@ -271,6 +288,12 @@ export function slotsFor(lens: Lens, help: HelpMode[], familyGap: boolean): Slot
   // Its position comes from CANONICAL like everything else, so it is simply appended and sorted.
   if (familyGap && !seen.has('family')) {
     middle.push(FAMILY)
+    middle.sort((a, b) => canonical(a.id) - canonical(b.id))
+  }
+
+  // Earned by a second account existing, exactly as the family section is earned by evidence.
+  if (partner && !seen.has('together')) {
+    middle.push(TOGETHER)
     middle.sort((a, b) => canonical(a.id) - canonical(b.id))
   }
 

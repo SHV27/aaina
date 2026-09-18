@@ -180,6 +180,20 @@ export const RELATIONSHIP_ITEMS: Item[] = [
     showWhen: (c) => notOneSided(c) && isLive(c),
   },
 
+  /* ── couple mode: the one thing the second person writes, knowing who reads it ── */
+  {
+    id: 'partner_note',
+    text: 'Is there one thing you want them to know?',
+    format: 'freetext',
+    dimension: null,
+    reverse: false,
+    sources: ['reis2004'],
+    licence: 'aaina-authored',
+    chapter: 'between',
+    placeholder: 'Optional. They will read this exactly as you write it — nothing here is summarised or softened. Skip it and nothing else changes.',
+    showWhen: () => false,
+  },
+
   /* ── free text: the quote bank. Every report must contain their own words. ── */
   {
     id: 'txt_why',

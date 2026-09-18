@@ -69,6 +69,10 @@ export function choosePractices(
      steps all say "you are at 15% on how clearly you see yourself" is a list wearing a sequence's
      clothes. Each practice claims the worst dimension it treats that nothing earlier has claimed. */
   const claimed = new Set<DimensionId>()
+  /* The title of the step that claimed the same dimension, so a follow-on step names what it is
+     following on from. Two people prescribed the same exercise for the same reason otherwise got
+     word-for-word the same sentence under it. */
+  const claimedBy = new Map<DimensionId, string>()
 
   /* They told us what they already tried. Handing it back as a suggestion is the fastest way to
      prove nobody read it, so where a chosen practice is a version of something they attempted,
@@ -99,16 +103,57 @@ export function choosePractices(
     const place = rank === 0 ? 'the hardest thing in your whole profile' : 'among the hardest things you reported'
     const direction = dim && !dim.higherIsBetter ? ', and on that scale a high number is the costly direction' : ''
 
+    /* The reason leads with the FINDING, not the score.
+     *
+     * "You are at 33% on feeling appreciated" is true and it is also the same sentence for every
+     * person who scored 33% there — four of the test personas were handed word-for-word identical
+     * reasons for their own plans. A finding cannot collide that way: it is built from which two
+     * of their answers disagreed, or what they wrote, so it is theirs by construction. This file
+     * has always claimed the plan is anchored to the analysis; now it is. */
+    const clip = (t: string, n: number) =>
+      `${t.replace(/\s+/g, ' ').trim().slice(0, n).replace(/[\s,;—-]+$/, '')}…`
+
+    /* Prefer the person's own words over the finding's opening sentence.
+     *
+     * Two people who land in the same position in the same loop get the same first 150 characters
+     * of the same finding, because that part of it is the mechanism. What cannot collide is
+     * something they typed. */
+    const quoted = finding?.evidence.find((e) => e.kind === 'quote' && e.detail.length > 30)
+    const ownWords = quoted
+      ?? (() => {
+        for (const id of ['con_change', 'con_story', 'txt_why', 'fut_gap']) {
+          const v = answers[id]?.value
+          if (typeof v === 'string' && v.trim().length > 30) {
+            return { detail: `"${v.trim()}"` } as { detail: string }
+          }
+        }
+        return null
+      })()
+
+    /* Their own words first, always. A finding's opening sentence is the mechanism it describes,
+       and two people standing in the same place in the same loop share it word for word. */
+    const anchor = ownWords
+      ? `you wrote ${clip(ownWords.detail.replace(/^"|"$/g, ''), 130)}`
+      : finding
+        ? clip(finding.statement, 150)
+        : null
+
     const because = targetScore && dim
       ? (fresh
-          ? `You are at ${targetScore.pomp}% on ${dim.label.toLowerCase()}${direction} — ${place}. This is the published intervention aimed at exactly that.`
-          : `This one works on the same ${targetScore.pomp}% — ${dim.label.toLowerCase()} — from a different angle: the step above changes what you notice, and this one changes what you do about it.`)
-      : `Chosen for what you asked for: ${p.purpose.toLowerCase()}`
+          ? (anchor
+              ? `This is here for a specific thing you said — ${anchor} ${dim.label.toLowerCase().replace(/^./, (c) => c.toUpperCase())} came out at ${targetScore.pomp}%${direction ? ', where a high number is the costly direction' : ''}, and this is the published intervention aimed at exactly that.`
+              : `You are at ${targetScore.pomp}% on ${dim.label.toLowerCase()}${direction} — ${place}. This is the published intervention aimed at exactly that.`)
+          : `This works on the same ${targetScore.pomp}% — ${dim.label.toLowerCase()} — from a different angle to ${claimedBy.get(target!) ? `"${claimedBy.get(target!)}"` : 'the step above'}: that one changes what you notice, and this one changes what you do about it.`)
+      : anchor
+        ? `Chosen for this: ${anchor}`
+        : `Chosen for what you asked for: ${p.purpose.toLowerCase()}`
 
     const evidenceIds = [
       ...(target ? [`ev:dim:${target}`] : []),
       ...(finding ? finding.evidence.slice(0, 2).map((e) => e.id) : []),
     ]
+
+    if (target && fresh) claimedBy.set(target, p.title)
 
     const priorAttempt = acknowledgedOnce ? undefined : tried.get(p.id)
     if (priorAttempt) acknowledgedOnce = true

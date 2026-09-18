@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import { persist, createJSONStorage } from 'zustand/middleware'
 import type { Answer, AnswerMap, Context, ChapterId, Lens, Stage, HelpMode } from '../engine/types'
 import { suggestedHelp } from '../items/concern'
+import { usePartner } from './partner'
 
 /**
  * The answer store — the only source of what the person said.
@@ -148,7 +149,14 @@ export const useAnswers = create<AnswersState>()(
       eraseEverything: () => {
         try {
           window.localStorage.removeItem('aaina-v3')
+          /* Couple mode keeps the second person's answers in their own store. "Erase everything"
+             has to mean everything, and somebody else's answers most of all — they were given on
+             the understanding that this device is where they stop. The key goes AND the live
+             store is cleared, because removing the key alone would leave them in memory for the
+             rest of the session and still on screen. */
+          window.localStorage.removeItem('aaina-partner-v1')
         } catch { /* nothing to erase */ }
+        usePartner.getState().clear()
         set({
           context: EMPTY_CONTEXT,
           answers: {},

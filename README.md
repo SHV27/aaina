@@ -105,6 +105,26 @@ differentiation, grief structure. The engine chooses them; the writer only expla
 comes with what to do the first time, what to do when it goes badly, and what would be observably
 different in six weeks if it worked.
 
+### Both of you, if they will
+
+<p align="center">
+  <img src="docs/shots/report-together-desktop.png" width="100%" alt="The couple section: where two accounts agree, where they do not, and how close the guess was.">
+</p>
+
+Twenty questions for the other person, about six minutes, answered without seeing anything the
+first person said. Both halves travel in a URL fragment — which is never sent to a server — through
+whatever app the couple already use. Nothing reaches us in either direction, and the safety chapter
+is barred from the link in code, with a test that pushes a disclosure at it and checks it comes out
+the other side missing.
+
+It does **not** make the reading more accurate; nothing can, from one more account. What it adds is
+the one thing a single account cannot give: the distance between two versions of the same
+relationship — and the mark on the guess, because the first person was asked to predict two of
+their partner's answers before giving their own.
+
+The sharpest thing it finds is when somebody guesses right and the two of them still disagree.
+That rules out the explanation both of them have been using.
+
 ### It holds both ends of India
 
 Most people here are living somewhere between a modern life and a traditional obligation, and that
@@ -156,9 +176,10 @@ api/write.ts     the only holder of the API key. zod allowlist, throttled, never
 ```bash
 npm install
 npm run dev            # http://localhost:5173
-npm run verify         # secret scan + build + tests. The definition of done.
+npm run verify         # secret scan + build + tests + both gates. The definition of done.
 npm run eval:generic   # the anti-generic gate, deterministic
 npm run eval:live      # the same gate against the real writer
+npm run audit          # the five failure tests, measured on the finished text
 npx playwright test    # 42 journeys, desktop and mobile
 ```
 
@@ -171,7 +192,7 @@ delivers the analysis — a silent fallback is banned.
 
 ## How it is checked
 
-- **142 unit tests** and **42 browser journeys**, desktop and mobile.
+- **211 unit tests** and **52 browser journeys**, desktop and mobile.
 - **The anti-generic gate** measures two different things: how often two people's reports reuse a
   frame, and how many claims lack anything specific to that person. The second currently sits at
   **0%**.
@@ -179,6 +200,11 @@ delivers the analysis — a silent fallback is banned.
   does not resolve, and on any source in the registry that nothing cites.
 - Two of the test personas are deliberately *similar*, because the transplant problem has to be
   solved for the hard case rather than the obvious one.
+- **`npm run audit`** measures the five ways this is allowed to fail, on the finished text:
+  whether it lands as insight rather than description, whether any claim could have been written
+  for somebody else, whether it hands over exercises rather than advice, whether it converges, and
+  whether anything in it reads as generated. It prints the offending sentences when it finds any,
+  and it runs as part of `npm run verify`.
 
 <p align="center">
   <img src="docs/shots/jhalak-mobile.png" width="32%" alt="The glimpse: a reading built from seven answers.">

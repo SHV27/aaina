@@ -35,12 +35,16 @@ function eligible(slot: Slot, f: Finding, axes: FourAxes): boolean {
   // Same for the past-tense aftermath findings: the "aha" slot took them and printed them where
   // somebody looking for "where you actually are" would never find them.
   if (f.id.startsWith('f:aft:') && slot.wants !== 'aftermath' && slot.wants !== 'rest') return false
+  // And the two-account findings belong in the two-account section.
+  if (f.kind === 'partnerGap' && slot.wants !== 'partner' && slot.wants !== 'rest') return false
+  // The cycle finding IS the cycle section; without this the theme slot took it every time.
+  if (f.id.startsWith('f:cyc:') && slot.wants !== 'cycle' && slot.wants !== 'rest') return false
 
   switch (slot.wants) {
     case 'none': return false
     case 'strengths': return f.finnLevel === 1 || (f.kind === 'extreme' && f.notability > 0.4)
     case 'theme': return f.finnLevel === 3 && (f.kind === 'contradiction' || f.kind === 'quote' || f.kind === 'predictionGap')
-    case 'cycle': return f.dimensions.includes('conflict') || f.dimensions.includes('responsiveness') || f.kind === 'predictionGap'
+    case 'cycle': return f.id.startsWith('f:cyc:') || f.dimensions.includes('conflict') || f.dimensions.includes('responsiveness') || f.kind === 'predictionGap'
     case 'deep': return f.finnLevel >= 2 && (f.kind === 'contradiction' || f.kind === 'configural')
     case 'hold': return f.dimensions.some((d) => d === 'constraint' || d === 'alternatives' || d === 'familyApproval') || axes.shape === 'held-by-cost'
     case 'exclusion': return f.kind === 'exclusion'
@@ -49,6 +53,7 @@ function eligible(slot: Slot, f: Finding, axes: FourAxes): boolean {
     case 'future': return f.kind !== 'assumption' && (f.dimensions.includes('futureSelfContinuity') || f.dimensions.includes('valuesLived'))
     case 'family': return f.id.startsWith('f:fam:') || f.dimensions.includes('familyApproval')
     case 'aftermath': return f.id.startsWith('f:aft:')
+    case 'partner': return f.kind === 'partnerGap'
     case 'assumption': return f.kind === 'assumption'
     case 'rest': return f.kind !== 'assumption' && !f.id.startsWith('f:con:')
   }
@@ -80,12 +85,13 @@ export function planSections(
   axes: FourAxes,
   _scored: Scored[],
   answers: AnswerMap = {},
+  hasPartner = false,
 ): SectionPlan[] {
   /* Which sections exist at all depends on the help they asked for, and on whether the evidence
      earns the family section. See slots.ts — this is the structural answer to "Aaina is not a
      compatibility checker". */
   const familyGap = hasFamilyGap(findings, _scored, ctx, answers)
-  const slots = slotsFor(ctx.lens, ctx.help, familyGap)
+  const slots = slotsFor(ctx.lens, ctx.help, familyGap, hasPartner)
   const pool = [...findings].filter((f) => f.accepted).sort((a, b) => b.notability - a.notability)
   const used = new Set<string>()
   const out: SectionPlan[] = []
@@ -111,7 +117,7 @@ export function planSections(
     if (slot.wants === 'none') { assignments.set(slot.id, []); continue }
     // The family section carries three: the paired distance, the filial split, and what they
     // believe disagreeing would cost. All three are one argument and splitting them loses it.
-    const take = slot.wants === 'theme' ? 1 : slot.wants === 'rest' || slot.wants === 'family' || slot.wants === 'aftermath' ? 3 : 2
+    const take = slot.wants === 'theme' ? 1 : slot.wants === 'rest' || slot.wants === 'family' || slot.wants === 'aftermath' ? 3 : slot.wants === 'partner' ? 5 : 2
     const picked = pool
       .filter((f) => !used.has(f.id) && eligible(slot, f, axes))
       .slice(0, take)

@@ -123,6 +123,15 @@ const PARAGRAPH_AT = 430
 const SENTENCE = /(?<=[.!?\u2026])\s+(?=[A-Z"\u201c])/
 
 export function paragraphise(text: string): string[] {
+  /* Breaks the engine put in deliberately come first and are never overridden.
+     Several computed statements — the cycle, the couple section, the three paths — are written as
+     real paragraphs, and flattening them into one block threw away structure that was chosen. */
+  const authored = text.split(/\n{1,}/).map((t) => t.trim()).filter(Boolean)
+  if (authored.length > 1) return authored.flatMap(splitLong)
+  return splitLong(text)
+}
+
+function splitLong(text: string): string[] {
   if (text.length <= PARAGRAPH_AT * 1.4) return [text]
 
   const sentences = text.split(SENTENCE)

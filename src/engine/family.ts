@@ -142,9 +142,8 @@ export function familyFindings(answers: AnswerMap, ctx: Context): Finding[] {
       id: fid(),
       kind: 'configural',
       statement:
-        `Two of your answers belong next to each other, because nearly everyone treats them as one thing and they are not. ` +
-        `Asked about "I want to take care of my parents as they get older, and I would choose that freely", you said ${scaleWord(recip)} true. ` +
-        `Asked about "I should do what my parents want even when I think they are wrong", you said ${scaleWord(auth)} true. ` +
+        `You want to take care of your parents as they get older and would choose that freely — ${scaleWord(recip)} true. You also do what they want when you think they are wrong — ${scaleWord(auth)} true. ` +
+        `Those two answers belong next to each other, because nearly everyone treats them as one thing and they are not. ` +
         `Those are two separate things. They are measured separately in the research and they pull in opposite directions: the first is consistently associated with people doing better, and the second with people doing worse. ` +
         `This matters more than almost anything else here, because most advice you will be given asks you to give up the first in order to escape the second. You do not have to. ` +
         `Wanting to look after them is not what is costing you. Obedience that overrides your own judgement is a different thing entirely, and it is the only one of the two that has to move.`,
@@ -171,9 +170,12 @@ export function familyFindings(answers: AnswerMap, ctx: Context): Finding[] {
       id: fid(),
       kind: 'cutoff',
       statement:
-        `Asked about "If I went against them on this, I would stop being close to them", you said ${scaleWord(contact)} true. ` +
+        `Going against them on this would mean no longer being close to them — you said that is ${scaleWord(contact)} true. ` +
         (sayable !== null && sayable <= 2
           ? `You also said you cannot tell them what you actually think without it becoming a fight. `
+          : '') +
+        (self !== null && family !== null
+          ? `You also put who this decision belongs to at ${scaleWord(self)} yours and ${scaleWord(6 - family)} theirs, which is the distance that belief is guarding. `
           : '') +
         `That belief is doing more work in this situation than any number in this report. Somebody who believes disagreement ends closeness is not choosing between two options; they are weighing one option against losing their family, and nobody makes that choice well. ` +
         `What is worth knowing is that the family research treats holding your own position and staying connected as two separate capacities rather than as opposites. The failure case is not disagreeing. It is disagreeing by disappearing. ` +

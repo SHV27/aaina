@@ -171,7 +171,13 @@ function residuals(scored: Scored[], answers: AnswerMap): Finding[] {
     out.push({
       id: fid('residual'),
       kind: 'contradiction',
-      statement: `Across everything you said about ${d.label.toLowerCase()}, your answers were consistent — except one. To "${i.text}" you answered differently enough that it stands alone. It is the only place in this whole section where you broke your own pattern.`,
+      /* The answer itself is in the sentence, not only in the receipts. Without it, two different
+         people whose outlier happened to be the same question were handed the same paragraph
+         word for word — which is the failure this whole engine exists to make impossible. */
+      statement:
+        `Across everything you said about ${d.label.toLowerCase()} — ${s.answered} answers, averaging ${Math.round(mean)}% — you were consistent, except once. ` +
+        `To "${i.text}" you answered ${renderAnswer(i, answers[odd.iid]!.value as number).replace('You chose: ', '').toLowerCase()}, which puts it at ${Math.round(odd.p)}%: ${Math.round(Math.abs(odd.p - mean))} points away from the rest of you. ` +
+        `It is the only place in everything you said about that where you broke your own pattern, and an outlier that size is usually about one specific thing rather than about the whole of it.`,
       notability: Math.min(1, Math.abs(odd.p - mean) / 60),
       baseRate: 0.12,
       finnLevel: 2,

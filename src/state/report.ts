@@ -4,6 +4,7 @@ import { derive, withReaction } from '../engine/derive'
 import { composeReport } from '../report/compose'
 import { useAnswers } from './answers'
 import { useSafety } from './safety'
+import { partnerAnswersNow } from './partner'
 
 /**
  * Report state. Memory only — a derived artefact is never persisted, because `derive()` is
@@ -35,6 +36,9 @@ function currentInput() {
     context: a.context,
     answers: a.answers,
     safetyAnswers: s.answers,
+    /* The second person's answers, when the reader has accepted a set. Undefined otherwise, and
+       `derive` produces no couple findings and no couple section from undefined. */
+    ...(partnerAnswersNow() ? { partnerAnswers: partnerAnswersNow() } : {}),
     skipped: a.skipped,
     startedAt: a.startedAt,
     finishedAt: a.finishedAt || Date.now(),

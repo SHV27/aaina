@@ -16,10 +16,11 @@
     "deploy:check": "node scripts/deploy.mjs --check",
     "shots": "node scripts/shots.mjs",
     "secretscan": "node scripts/secret-scan.mjs",
-    "verify": "npm run secretscan && npm run build && npm test",
+    "verify": "npm run secretscan && npm run build && npm test && npm run eval:generic && npm run audit",
     "dev:api": "node scripts/dev-api.mjs",
     "probe": "tsx scripts/live-probe.ts",
-    "assets": "node scripts/assets.mjs"
+    "assets": "node scripts/assets.mjs",
+    "audit": "tsx scripts/audit.ts"
   },
   "dependencies": {
     "lz-string": "1.5.0",

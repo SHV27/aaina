@@ -15,9 +15,21 @@ import { sunita, kabir } from '../engine/fixtures-hard'
 describe('paragraphise', () => {
   const findings = [rohit, arjun, vikram, sunita, kabir].flatMap((f) => derive(f()).findings)
 
-  it('never changes a single character of what the engine wrote', () => {
+  /** Whitespace is the only thing splitting is allowed to touch. */
+  const words = (s: string) => s.replace(/\s+/g, ' ').trim()
+
+  it('never changes a single word of what the engine wrote', () => {
     for (const f of findings) {
-      expect(paragraphise(f.statement).join(' '), f.id).toBe(f.statement)
+      expect(words(paragraphise(f.statement).join(' ')), f.id).toBe(words(f.statement))
+    }
+  })
+
+  it('keeps the paragraph breaks the engine put in deliberately', () => {
+    const authored = findings.filter((f) => f.statement.includes(String.fromCharCode(10)))
+    expect(authored.length, 'no multi-paragraph statements to check').toBeGreaterThan(0)
+    for (const f of authored) {
+      const wanted = f.statement.split(String.fromCharCode(10)).map((t) => t.trim()).filter(Boolean).length
+      expect(paragraphise(f.statement).length, f.id).toBeGreaterThanOrEqual(wanted)
     }
   })
 

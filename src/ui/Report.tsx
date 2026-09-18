@@ -3,6 +3,7 @@ import { Link, useLocation } from 'wouter'
 import { useReport } from '../state/report'
 import { useAnswers } from '../state/answers'
 import { useSafety } from '../state/safety'
+import { usePartner } from '../state/partner'
 import { compositeOf } from '../engine/derive'
 import { SHAPE_COPY, SELF_SHAPE_COPY, selfShapeOf } from '../engine/axes'
 import { DIM_BY_ID } from '../engine/dimensions'
@@ -91,6 +92,13 @@ export function Report() {
         {/* One page. Clarity is less to think about, not more — a ten-thousand-word report can
             leave an overthinker with more to churn on than they arrived with. */}
         {!report.running && report.sections.length > 0 && <Takeaway packet={packet} />}
+
+        {/* Couple mode is offered here and only here: after they have read their own reading,
+            so the invitation is "there is more" rather than a gate in front of the thing they
+            came for. Hidden once a second account exists, because then it is already in. */}
+        {!report.running && report.sections.length > 0 && packet.context.lens === 'relationship' && (
+          <InviteThem hasPartner={packet.findings.some((f) => f.kind === 'partnerGap')} />
+        )}
 
         {!report.running && report.sections.length > 0 && (
           <Closing packet={packet} limitsAlreadyShown={report.sections.some((s) => s.id === 'limits')} />
@@ -284,6 +292,57 @@ function DimensionTable({ packet }: { packet: EvidencePacket }) {
         </details>
       )}
     </div>
+  )
+}
+
+/**
+ * The offer to bring the other person in.
+ *
+ * Deliberately not a headline feature and deliberately not on the way in. Somebody arriving at
+ * Aaina is usually not in a position to ask their partner for twenty minutes, and making the
+ * product feel like it needs both of them would lock out every person who most needs it — the
+ * one whose partner will not participate, and the one who has not told anybody they are looking.
+ */
+function InviteThem({ hasPartner }: { hasPartner: boolean }) {
+  const partner = usePartner()
+
+  if (hasPartner) {
+    return (
+      <section className="no-print" style={{ marginTop: '2rem' }}>
+        <hr className="rule" style={{ marginBottom: '1.5rem' }} />
+        <p className="attrib" style={{ marginBottom: '0.75rem' }}>
+          Their answers are part of this report. They are held on this device only, and they go
+          when you erase everything.
+        </p>
+        <button className="btn btn-quiet" onClick={() => partner.clear()}>
+          Remove their answers
+        </button>
+      </section>
+    )
+  }
+
+  return (
+    <section
+      className="no-print settle"
+      style={{
+        marginTop: '2.5rem',
+        border: '1px solid var(--color-kagaz-edge)',
+        padding: 'clamp(1.25rem, 3vw, 1.85rem)',
+        borderRadius: '3px',
+      }}
+    >
+      <div className="eyebrow" style={{ marginBottom: '0.6rem' }}>If they would</div>
+      <h2 style={{ fontSize: 'var(--text-h3)', marginBottom: '0.75rem' }}>
+        There is a version of this with both of you in it.
+      </h2>
+      <p style={{ color: 'var(--color-kajal-soft)', marginBottom: '1.25rem' }}>
+        Twenty questions for them, about six minutes, answered without seeing anything you said.
+        It will not make this reading more accurate — nothing can do that from one more account.
+        What it adds is the distance between two versions of the same relationship, and whether
+        you were right when you guessed at them.
+      </p>
+      <Link href="/together" className="btn btn-primary">See how that works</Link>
+    </section>
   )
 }
 

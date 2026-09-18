@@ -10,6 +10,8 @@ import { selfWorkFindings, resetSelfWorkIds, assumptionTest } from './selfwork'
 import { concernFindings, resetConcernIds } from './concern'
 import { familyFindings, resetFamilyIds } from './family'
 import { aftermathFindings, suppressPresentTense, resetAftermathIds } from './aftermath'
+import { coupleFindings, resetCoupleIds } from './couple'
+import { cycleFindings, resetCycleIds } from './cycle'
 
 export const PACKET_VERSION = '3.0.0'
 
@@ -30,8 +32,10 @@ export function derive(input: AssessmentInput): EvidencePacket {
   resetConcernIds()
   resetFamilyIds()
   resetAftermathIds()
+  resetCoupleIds()
+  resetCycleIds()
 
-  const { context, answers, safetyAnswers, skipped } = input
+  const { context, answers, safetyAnswers, skipped, partnerAnswers } = input
 
   const dimensions = scoreAll(answers, context.lens)
   const axes = computeAxes(context, dimensions, safetyAnswers)
@@ -44,6 +48,9 @@ export function derive(input: AssessmentInput): EvidencePacket {
        the two halves of filial piety kept apart, and what they believe disagreeing would cost.
        See family.ts — and the rule that no side is ever taken against anybody's family. */
     ...familyFindings(answers, context),
+    /* Demand and withdraw — the most replicated interaction pattern in couples research, and the
+       thing most couples mean when they say they have communication problems. See cycle.ts. */
+    ...cycleFindings(answers, dimensions, context),
     ...findContradictions(answers, dimensions, skipped, context),
     ...configuralFindings(dimensions),
     ...exclusionFindings(dimensions, context),
@@ -62,10 +69,14 @@ export function derive(input: AssessmentInput): EvidencePacket {
      tense ones that replace them. */
   const findings: Finding[] = suppressPresentTense(raw, context)
     .concat(aftermathFindings(dimensions, answers, context))
+    /* The second account, when there is one. Not a tiebreaker — the only thing it can give that
+       one account cannot is the distance between two versions of the same relationship. */
+    .concat(coupleFindings(answers, partnerAnswers, dimensions))
     .sort((a, b) => b.notability - a.notability)
 
   const quotes = collectQuotes(input)
-  const plan = planSections(context, findings, axes, dimensions, answers)
+  const hasPartner = !!partnerAnswers && Object.keys(partnerAnswers).length > 0
+  const plan = planSections(context, findings, axes, dimensions, answers, hasPartner)
   const limits = limitsFor(context, axes, dimensions)
   const practices = choosePractices(context, dimensions, findings, axes, answers)
   const assumption = context.lens === 'self' ? assumptionTest(answers) : null
@@ -126,6 +137,9 @@ export function fingerprint(input: AssessmentInput): string {
     parts.push(`${id}=${a.value}`)
   }
   for (const id of [...input.skipped].sort()) parts.push(`skip:${id}`)
+  for (const id of Object.keys(input.partnerAnswers ?? {}).sort()) {
+    parts.push(`p:${id}=${input.partnerAnswers![id]!.value}`)
+  }
   // Safety answers change the report, so they change the fingerprint — but only via a coarse
   // digest, never their content, because a fingerprint can end up in a cache key.
   const safetyCount = Object.keys(input.safetyAnswers).length
@@ -155,6 +169,13 @@ export function compositeOf(packet: EvidencePacket) {
  */
 export function withReaction(packet: EvidencePacket, findingId: string, accepted: boolean): EvidencePacket {
   const findings = packet.findings.map((f) => (f.id === findingId ? { ...f, accepted } : f))
-  const plan = planSections(packet.context, findings, packet.axes, packet.dimensions)
+  const plan = planSections(
+    packet.context,
+    findings,
+    packet.axes,
+    packet.dimensions,
+    {},
+    findings.some((f) => f.kind === 'partnerGap'),
+  )
   return { ...packet, findings, plan }
 }

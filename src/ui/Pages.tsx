@@ -1,4 +1,7 @@
+import { useState } from 'react'
 import { Link } from 'wouter'
+import { usePartner } from '../state/partner'
+import { useAnswers } from '../state/answers'
 import { SOURCES } from '../engine/sources'
 import { DIMENSIONS, weightProvenance } from '../engine/dimensions'
 import { ALL_ITEMS, SAFETY_ITEMS } from '../items'
@@ -187,6 +190,50 @@ export function Science() {
 
 /* ════════════════════════════════════════════════════════════════════════ */
 
+/**
+ * The erase control, on the page where somebody actually goes looking for it.
+ *
+ * It existed only on the home screen, behind a condition, worded as "start fresh instead" — which
+ * is a control for somebody beginning again, not for somebody who has decided they want their
+ * answers gone. A person who wants this wants it now, from the page that told them it was
+ * possible, and they should not have to navigate to find it.
+ *
+ * It takes the second person's answers too, when there are any. That is the case that matters
+ * most: those were given by somebody who is not here to check.
+ */
+function EraseControl() {
+  const [done, setDone] = useState(false)
+  const partner = usePartner()
+  const hasPartner = !!partner.answers && Object.keys(partner.answers).length > 0
+
+  if (done) {
+    return (
+      <p style={{ marginTop: '1rem', color: 'var(--color-sindoor)' }}>
+        Erased. Nothing of yours is left in this browser.
+      </p>
+    )
+  }
+
+  return (
+    <div className="no-print" style={{ marginTop: '1.25rem' }}>
+      <button
+        className="btn btn-quiet"
+        onClick={() => {
+          useAnswers.getState().eraseEverything()
+          setDone(true)
+        }}
+      >
+        Erase everything now
+      </button>
+      <p className="attrib" style={{ marginTop: '0.6rem' }}>
+        Every answer, immediately, with no way for us to get it back
+        {hasPartner ? ' — including the answers the other person gave you' : ''}. There is no
+        confirmation step because there is nothing on the other side of it to protect.
+      </p>
+    </div>
+  )
+}
+
 export function Privacy() {
   return (
     <Shell
@@ -200,9 +247,9 @@ export function Privacy() {
         </p>
         <p style={{ color: 'var(--color-kajal-soft)' }}>
           Your answers live in <strong>this browser</strong>, so you can close the tab and come
-          back. You can erase them completely at any time from the home screen, and clearing your
-          browser data erases them too.
+          back. Clearing your browser data erases them, and so does the control below.
         </p>
+        <EraseControl />
       </Block>
 
       <Block title="But something does leave your device, and we are not going to hide it">

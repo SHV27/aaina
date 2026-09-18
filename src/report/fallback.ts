@@ -17,6 +17,9 @@ import { PRACTICE_BY_ID, markerSentence } from '../engine/practices'
  * LAW 7 — whenever it is used, the UI says so, in those words.
  */
 
+/** A paragraph break, as a constant rather than an escape. See couple.ts for why. */
+const BREAK = String.fromCharCode(10)
+
 let n = 0
 const pid = () => `p:det:${(n += 1)}`
 export function resetFallbackIds() { n = 0 }
@@ -33,6 +36,8 @@ function readingFor(packet: EvidencePacket) {
 }
 
 export function fallbackSection(plan: SectionPlan, packet: EvidencePacket): ReportSection {
+  // What comes next, by name. Different readers get different sections, so this is theirs.
+  const nextSection = packet.plan[packet.plan.findIndex((x) => x.id === plan.id) + 1]
   const findings = plan.findingIds
     .map((id) => packet.findings.find((f) => f.id === id))
     .filter((f): f is NonNullable<typeof f> => !!f)
@@ -80,12 +85,30 @@ export function fallbackSection(plan: SectionPlan, packet: EvidencePacket): Repo
       break
     }
 
-    case 'turn':
+    /* The SPIKES warning shot. Its whole job is to say what KIND of hard is coming, which means
+       it cannot be the same paragraph for a person about to read a contradiction between two of
+       their own answers and a person about to read what their family expects of them. */
+    case 'turn': {
+      const next = packet.findings.find((f) => f.accepted && f.finnLevel === 3) ?? packet.findings[0]
+      const kind = !next
+        ? 'it will ask you to look at your own answers together rather than one at a time'
+        : next.kind === 'contradiction' || next.kind === 'configural'
+          ? 'it puts two things you said next to each other, minutes apart, and lets them disagree'
+          : next.kind === 'partnerGap'
+            ? 'it puts what you said beside what they said, and neither version gets to be the correct one'
+            : next.kind === 'telemetry'
+              ? 'it is about how you answered rather than what you answered, which is a stranger thing to read about yourself than it sounds'
+              : next.kind === 'exception'
+                ? 'it points at one answer of yours that does not fit the rest, which is harder to look at than a weakness'
+                : 'it names something your own answers point at that you have not said out loud'
+
       paragraphs.push(para(
-        `The next part is harder than what you have just read. It is not a judgement about you, and there is nothing in it you did not already tell us — but it will put two things you said next to each other, and that is an uncomfortable thing to look at. Take it slowly.`,
-        packet.findings[0] ? [packet.findings[0].evidence[0]!.id] : [],
+        `The next part — ${nextSection ? `"${nextSection.title}"` : 'what follows'} — is harder than what you have just read, and it is worth knowing which kind of hard: ${kind}. ` +
+        `There is nothing in it you did not already tell us, and none of it is a judgement about you. Take it slowly, and it is a real option to stop here — what you have read so far does not stop being true if you do.`,
+        next?.evidence[0] ? [next.evidence[0].id] : packet.dimensions.slice(0, 1).map((d) => `ev:dim:${d.id}`),
       ))
       break
+    }
 
     case 'standing': {
       const comp = compositeOf(packet)
@@ -111,34 +134,110 @@ export function fallbackSection(plan: SectionPlan, packet: EvidencePacket): Repo
       break
     }
 
-    case 'paths':
-      paragraphs.push(para(
-        `There are three directions available from here, and each has a cost that is worth naming out loud rather than discovering later. ` +
-        `The first is to change nothing and let the situation continue as it is — which costs you time, and the specific things this report has shown are being worn down by the wait. ` +
-        `The second is to work on it deliberately, which means naming the pattern to the other person and accepting that the first few attempts will go badly. ` +
-        `The third is to end it, which costs the future you had already partly built and the version of yourself that was going to be in it. ` +
-        `None of these is free, and a version of this decision where nothing is lost does not exist. Which one is right is genuinely yours to decide, and this report is not going to take that from you.`,
-        packet.dimensions.slice(0, 2).map((d) => `ev:dim:${d.id}`),
-      ))
-      break
+    /* Three paths, costed in this person's own numbers.
+       Written generically this was the same five sentences for everybody, which is the worst
+       place in the report for that: it is the section a person deciding something rereads. */
+    case 'paths': {
+      const worn = [...packet.dimensions]
+        .filter((d) => !d.thin)
+        .map((d) => ({ d, oriented: DIM_BY_ID[d.id].higherIsBetter ? d.pomp : 100 - d.pomp }))
+        .sort((x, y) => x.oriented - y.oriented)[0]
+      const held = packet.dimensions.find((d) => d.id === 'constraint' && !d.thin)
+      const alt = packet.dimensions.find((d) => d.id === 'alternatives' && !d.thin)
+      const fear = packet.quotes.find((q) => q.id === 'ev:quote:txt_fear')
+      const years = packet.context.durationBucket
 
-    case 'read': {
-      const shape = readingFor(packet)
+      /* Led by what they said they want, because three abstract options are a decision aid and
+         three options weighed against a stated want are a decision. It is also the one thing in
+         this section that cannot coincide with another reader's. */
+      const wanted = packet.quotes.find((q) => q.id === 'ev:quote:con_change')
+        ?? packet.quotes.find((q) => q.id === 'ev:quote:txt_why')
+
       paragraphs.push(para(
-        `${shape.lead} That is the reading your own answers produce. It is a description of a pattern, not an instruction about your life — and the decision stays exactly where it was before you opened this, which is with you.`,
-        packet.findings.slice(0, 2).flatMap((f) => f.evidence.slice(0, 1).map((e) => e.id)),
+        (wanted
+          ? `You said what you want is ${wanted.detail.replace(/^"|"$/g, '').replace(/^[A-Z]/, (c) => c.toLowerCase()).replace(/\.$/, '')}. Three directions from here, and the cost of each one measured against that rather than against nothing.`
+          : `Three directions from here, and the cost of each in your numbers rather than in general.`) + BREAK + BREAK +
+        `${worn ? `Change nothing, and what pays for it is ${DIM_BY_ID[worn.d.id].label.toLowerCase()} — already at ${worn.d.pomp}%, the lowest thing you reported.` : 'Change nothing, and what pays for it is time, in the places this report has already shown are thinnest.'} ` +
+        `${years ? `You have been here ${years.replace('-', ' to ').replace('y', ' years').replace('m', ' months')} already, which is the only honest guide to how long "a bit longer" tends to be.` : 'Waiting is a decision with a cost, and it is the one people do not count.'}` + BREAK + BREAK +
+        `Work on it deliberately. That costs the first few attempts going badly, which they will, and it costs being the one who raises it when you are not sure they will meet you. ${held ? `It is also the path your own answers make hardest to abandon halfway, because what would make leaving hard is at ${held.pomp}%.` : ''}` + BREAK + BREAK +
+        `End it. That costs the future you had already partly built and the version of yourself who was going to be in it. ${alt ? `Your own read on whether you would be alright afterwards is ${alt.pomp}%, and that number is worth looking at twice — people are reliably wrong about it in both directions.` : ''}` + BREAK + BREAK +
+        `None of the three is free, and a version of this where nothing is lost does not exist. ` +
+        `${fear ? `You wrote that what you are most afraid of is ${fear.detail.replace(/^"|"$/g, '').replace(/^[A-Z]/, (c) => c.toLowerCase())} — and that fear attaches to exactly one of these three, which is worth noticing before you weigh them.` : ''} ` +
+        `Which one is right is genuinely yours, and this report is not going to take it from you.`,
+        [
+          ...(worn ? [`ev:dim:${worn.d.id}`] : []),
+          ...(held ? ['ev:dim:constraint'] : []),
+          ...(alt ? ['ev:dim:alternatives'] : []),
+          ...(fear ? [fear.id] : []),
+          ...(wanted ? [wanted.id] : []),
+        ],
       ))
       break
     }
 
-    case 'markers':
+    /* The shape copy is written per SHAPE, so two people who land on the same one get the same
+       lead — correct, and not sufficient. What follows it has to be theirs. */
+    case 'read': {
+      const shape = readingFor(packet)
+      const sharpest = packet.findings.filter((f) => f.accepted && f.finnLevel === 3).slice(0, 2)
+      const why = packet.quotes.find((q) => q.id === 'ev:quote:con_story')
+        ?? packet.quotes.find((q) => q.id === 'ev:quote:txt_why')
+
       paragraphs.push(para(
-        `A reading is only worth something if it could turn out to be wrong, so here is how you would know. ` +
-        `If this is right, then within about six weeks you should be able to point at something concrete that changed when you acted on it — not a feeling, a thing that happened. ` +
-        `If six weeks pass and nothing is different, the reading was wrong about something and it is worth coming back and answering the sections you skipped.`,
-        packet.findings.slice(0, 1).flatMap((f) => f.evidence.slice(0, 1).map((e) => e.id)),
+        (why
+          ? `You came in saying ${why.detail.replace(/^"|"$/g, '').slice(0, 150).replace(/^[A-Z]/, (c) => c.toLowerCase())}… Here is what your own answers say back about that.` + BREAK + BREAK
+          : '') +
+        `${shape.lead}` + BREAK + BREAK +
+        `That is the shape. What makes it yours rather than a category is underneath it: ` +
+        (sharpest.length
+          ? sharpest.map((f) => f.statement.slice(0, 160).trim() + '…').join(' And: ')
+          : 'the specific answers this report has already shown you.') + BREAK + BREAK +
+        `It is a description of a pattern, not an instruction about your life. The decision stays exactly where it was before you opened this, which is with you — and that is not modesty, it is that nobody can make it from eighty answers, including us.`,
+        [
+          ...sharpest.flatMap((f) => f.evidence.slice(0, 1).map((e) => e.id)),
+          ...(why ? [why.id] : []),
+        ],
       ))
       break
+    }
+
+    /* Falsifiable, and falsifiable about THIS reading — which means it has to name the number
+       that would have to move and the exercise that would move it. Written generically, this was
+       "you should be able to point at something concrete", which cannot be wrong and therefore
+       cannot be right either. */
+    case 'markers': {
+      const first = packet.practices[0]
+      const pr = first ? PRACTICE_BY_ID[first.practiceId] : undefined
+      const weakest = [...packet.dimensions]
+        .filter((d) => !d.thin)
+        .map((d) => ({ d, oriented: DIM_BY_ID[d.id].higherIsBetter ? d.pomp : 100 - d.pomp }))
+        .sort((x, y) => x.oriented - y.oriented)[0]
+      const sharpest = packet.findings.find((f) => f.accepted && f.finnLevel === 3)
+      const wanted = packet.quotes.find((q) => q.id === 'ev:quote:con_change')
+        ?? packet.quotes.find((q) => q.id === 'ev:quote:fut_gap')
+
+      paragraphs.push(para(
+        (wanted
+          ? `You said the one thing you would have different by tomorrow was ${wanted.detail.replace(/^"|"$/g, '').replace(/^[A-Z]/, (c) => c.toLowerCase()).replace(/\.$/, '')}. That is the thing to measure against, and it is more specific than anything we would have chosen for you.` + BREAK + BREAK
+          : '') +
+        `A reading is only worth something if it could turn out to be wrong, so here is exactly how you would know this one was.` + BREAK + BREAK +
+        (pr
+          ? `${markerSentence(pr.marker)} That is the first one, and it is about ${pr.title.toLowerCase()} rather than about how you feel, because how you feel in six weeks will also depend on things that have nothing to do with this.` + BREAK + BREAK
+          : '') +
+        (weakest
+          ? `The number to watch is ${DIM_BY_ID[weakest.d.id].label.toLowerCase()}, currently ${weakest.d.pomp}%. If the reading is right, that is the one that moves first, because it is where the work is aimed. If everything else shifts and that does not, the reading located the problem in the wrong place.` + BREAK + BREAK
+          : '') +
+        (sharpest
+          ? `And the thing that would show it wrong outright: if you go back to "${sharpest.statement.slice(0, 90).trim()}…" in six weeks and it simply does not describe you, then it did not, and you should trust that over this.`
+          : `If six weeks pass and nothing is different, the reading was wrong about something, and the honest next step is the chapters you skipped rather than reading this one again.`),
+        [
+          ...(first ? first.evidenceIds : []),
+          ...(weakest ? [`ev:dim:${weakest.d.id}`] : []),
+          ...(sharpest?.evidence[0] ? [sharpest.evidence[0].id] : []),
+        ],
+      ))
+      break
+    }
 
     /* The one section whose absence would be felt as a broken promise. Without this case the plan
        rendered whichever finding was left over — a person who read ten thousand words about
@@ -167,6 +266,8 @@ export function fallbackSection(plan: SectionPlan, packet: EvidencePacket): Repo
       let lastStage = ''
       let first = true
       for (const { sp, pr } of staged) {
+        // The finding this step answers, so the plan points back at the analysis by name.
+        const answered = packet.findings.find((f) => f.id === sp.findingId && f.accepted)
         /* Nobody's plan begins with "once that is running". If this person has nothing at the
            'now' stage — which happens whenever their whole plan is couple work — the first step is
            still the first step. */
@@ -177,7 +278,8 @@ export function fallbackSection(plan: SectionPlan, packet: EvidencePacket): Repo
           `${lead}: ${pr.title}. ${pr.purpose} ${sp.because} ` +
           `It takes about ${pr.minutes} minutes and you do it ${pr.needsPartner ? 'together' : 'on your own'}. ` +
           `The first time, ${lowerFirst(pr.firstTime)} Where it usually goes wrong: ${lowerFirst(pr.ifItGoesBadly)} ` +
-          `${markerSentence(pr.marker)}`,
+          `${markerSentence(pr.marker)}` +
+          (answered ? ` It is here because of this: ${answered.statement.slice(0, 130).trim()}…` : ''),
           sp.evidenceIds.length ? sp.evidenceIds : packet.dimensions.slice(0, 1).map((d) => `ev:dim:${d.id}`),
           sp.findingId,
         ))
