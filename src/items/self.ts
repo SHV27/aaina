@@ -82,17 +82,22 @@ export const SELF_ITEMS: Item[] = [
   it('cbo_3', 'People leave.', 'coreBeliefOther', true, ['wei2007'], { chapter: 'patterns' }),
   it('cbo_4', 'I can tell someone something difficult and it will be alright.', 'coreBeliefOther', false, ['reis2004'], { chapter: 'patterns' }),
 
-  /* self-compassion */
-  it('sco_1', 'When I mess up, I talk to myself the way I would talk to a friend who messed up.', 'selfCompassion', false, ['neff2003'], { chapter: 'patterns' }),
-  it('sco_2', 'I am harder on myself than anyone else is.', 'selfCompassion', true, ['neff2003'], { chapter: 'patterns' }),
-  it('sco_3', 'When something goes wrong, I assume other people are handling it better than I am.', 'selfCompassion', true, ['neff2003'], { chapter: 'patterns' }),
-  it('sco_4', 'I can forgive myself for something I did a long time ago.', 'selfCompassion', false, ['neff2003'], { chapter: 'patterns' }),
+  /* self-compassion and rumination sit in the shared 'you' chapter, not in the self lens only.
+     They were self-only, which meant the relationship half never measured either one — so a man
+     whose partner had just left, and who wrote that he had been over every conversation looking
+     for the part where he should have noticed, had no rumination score for anything to read.
+     Joel 2020 put individual-level variables in the top tier of relationship predictors; these
+     two are also the whole substance of the aftermath. Eight questions, both lenses. */
+  it('sco_1', 'When I mess up, I talk to myself the way I would talk to a friend who messed up.', 'selfCompassion', false, ['neff2003'], { chapter: 'you' }),
+  it('sco_2', 'I am harder on myself than anyone else is.', 'selfCompassion', true, ['neff2003'], { chapter: 'you' }),
+  it('sco_3', 'When something goes wrong, I assume other people are handling it better than I am.', 'selfCompassion', true, ['neff2003'], { chapter: 'you' }),
+  it('sco_4', 'I can forgive myself for something I did a long time ago.', 'selfCompassion', false, ['neff2003'], { chapter: 'you' }),
 
   /* rumination — brooding specifically */
-  it('rum_1', 'I replay conversations after they are over.', 'rumination', false, ['treynor2003'], { chapter: 'patterns' }),
-  it('rum_2', 'I ask myself "why did I do that" and never arrive anywhere.', 'rumination', false, ['treynor2003'], { chapter: 'patterns' }),
-  it('rum_3', 'Once I start thinking about something that went wrong, I cannot put it down.', 'rumination', false, ['treynor2003'], { chapter: 'patterns' }),
-  it('rum_4', 'Thinking things over usually helps me get somewhere.', 'rumination', true, ['treynor2003'], { chapter: 'patterns' }),
+  it('rum_1', 'I replay conversations after they are over.', 'rumination', false, ['treynor2003'], { chapter: 'you' }),
+  it('rum_2', 'I ask myself "why did I do that" and never arrive anywhere.', 'rumination', false, ['treynor2003'], { chapter: 'you' }),
+  it('rum_3', 'Once I start thinking about something that went wrong, I cannot put it down.', 'rumination', false, ['treynor2003'], { chapter: 'you' }),
+  it('rum_4', 'Thinking things over usually helps me get somewhere.', 'rumination', true, ['treynor2003'], { chapter: 'you' }),
 
   /* self-determination: the three needs */
   it('aut_1', 'The way I spend my days is genuinely my choice.', 'autonomy', false, ['ryan2000'], { chapter: 'patterns' }),

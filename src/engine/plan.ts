@@ -2,6 +2,7 @@ import type { Finding, SectionPlan, Context, FourAxes, Scored, AnswerMap } from 
 import { DIM_BY_ID } from './dimensions'
 import { slotsFor, type Slot } from './slots'
 import { familyGapLive } from './family'
+import { aftermathLimits } from './aftermath'
 
 /**
  * SECTION PLANNING — computed, never prompted.
@@ -31,6 +32,9 @@ function eligible(slot: Slot, f: Finding, axes: FourAxes): boolean {
      most useful sentence available to somebody caught between a family and a partner, and it
      belongs where they will look for it. */
   if (f.id.startsWith('f:fam:') && slot.wants !== 'family' && slot.wants !== 'rest') return false
+  // Same for the past-tense aftermath findings: the "aha" slot took them and printed them where
+  // somebody looking for "where you actually are" would never find them.
+  if (f.id.startsWith('f:aft:') && slot.wants !== 'aftermath' && slot.wants !== 'rest') return false
 
   switch (slot.wants) {
     case 'none': return false
@@ -44,6 +48,7 @@ function eligible(slot: Slot, f: Finding, axes: FourAxes): boolean {
     case 'concern': return f.id.startsWith('f:con:')
     case 'future': return f.kind !== 'assumption' && (f.dimensions.includes('futureSelfContinuity') || f.dimensions.includes('valuesLived'))
     case 'family': return f.id.startsWith('f:fam:') || f.dimensions.includes('familyApproval')
+    case 'aftermath': return f.id.startsWith('f:aft:')
     case 'assumption': return f.kind === 'assumption'
     case 'rest': return f.kind !== 'assumption' && !f.id.startsWith('f:con:')
   }
@@ -106,7 +111,7 @@ export function planSections(
     if (slot.wants === 'none') { assignments.set(slot.id, []); continue }
     // The family section carries three: the paired distance, the filial split, and what they
     // believe disagreeing would cost. All three are one argument and splitting them loses it.
-    const take = slot.wants === 'theme' ? 1 : slot.wants === 'rest' || slot.wants === 'family' ? 3 : 2
+    const take = slot.wants === 'theme' ? 1 : slot.wants === 'rest' || slot.wants === 'family' || slot.wants === 'aftermath' ? 3 : 2
     const picked = pool
       .filter((f) => !used.has(f.id) && eligible(slot, f, axes))
       .slice(0, take)
@@ -166,6 +171,15 @@ export function limitsFor(ctx: Context, axes: FourAxes, scored: Scored[]): strin
     'This is built entirely on what you told us. No self-report assessment is fake-proof, and ' +
     'nobody can tell from answers alone whether someone was answering the way they wish they were.',
   )
+
+  /* The aftermath owes a different honesty, and none of the limits below it are true for somebody
+     whose relationship has ended — "it describes your relationship as you are living it" is not a
+     sentence you write to a man who has been putting out two cups since April. */
+  const aftermath = aftermathLimits(ctx)
+  if (aftermath.length) {
+    out.push(...aftermath)
+    return out
+  }
 
   if (ctx.voice === 'solo' && ctx.lens === 'relationship') {
     out.push(

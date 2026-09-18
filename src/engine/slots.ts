@@ -23,7 +23,7 @@ export interface Slot {
   title: string
   intent: string
   words: number
-  wants: 'none' | 'strengths' | 'theme' | 'cycle' | 'deep' | 'hold' | 'exclusion' | 'exception' | 'future' | 'family' | 'assumption' | 'concern' | 'rest'
+  wants: 'none' | 'strengths' | 'theme' | 'cycle' | 'deep' | 'hold' | 'exclusion' | 'exception' | 'future' | 'family' | 'aftermath' | 'assumption' | 'concern' | 'rest'
   minFindings?: number
 }
 
@@ -183,9 +183,9 @@ const AFTERMATH: Slot = {
   id: 'aftermath',
   title: 'Where you actually are',
   intent:
-    'For someone recovering: no decision is pending, so do not offer one. Describe the shape of where they are — what is still open, what they are still arguing with, what they have already survived that they have not credited themselves for.',
+    'For someone recovering: no decision is pending, so do not offer one, and do not write about the relationship in the present tense. Describe the shape of where they are — what is still open, what they are still arguing with, what they have already survived and not credited themselves for. The findings you are given are written in the past tense on purpose; keep them there.',
   words: 850,
-  wants: 'deep',
+  wants: 'aftermath',
 }
 
 /* ────────────────────────────  shared close  ──────────────────────────── */

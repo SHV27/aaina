@@ -56,10 +56,10 @@ export const CHAPTER_META: Record<ChapterId, { title: string; hindi?: string; bl
   concern: { title: 'What brought you here', blurb: 'In your own words, with room to actually say it — and what kind of help would help.', minutes: 8 },
   ground: { title: 'What you stand on', blurb: 'What you actually value, in your own words. This comes first on purpose.', minutes: 7 },
   story: { title: 'Your situation', blurb: 'The shape of it, and the parts only you can tell us.', minutes: 6 },
-  you: { title: 'You', blurb: 'How you attach, how you handle hard feeling, how life is going apart from this.', minutes: 8 },
+  you: { title: 'You', blurb: 'How you attach, how you handle hard feeling, how you treat yourself when it goes wrong, and how life is going apart from this.', minutes: 10 },
   between: { title: 'Between you', blurb: 'The relationship itself — closely, on the things the research says actually matter.', minutes: 12 },
   holding: { title: 'What holds you', blurb: 'What would make leaving hard. This is the chapter most people have never been asked.', minutes: 9 },
-  patterns: { title: 'Your patterns', blurb: 'The beliefs underneath the behaviour, and where they came from.', minutes: 12 },
+  patterns: { title: 'Your patterns', blurb: 'The beliefs underneath the behaviour, and where they came from.', minutes: 10 },
   future: { title: 'Who you are becoming', blurb: 'The person on the other side of this, and the distance to them.', minutes: 7 },
   safety: { title: 'Everyone sees this page', blurb: 'The same questions for every person who uses Aaina.', minutes: 3 },
 }

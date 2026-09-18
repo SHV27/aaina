@@ -9,6 +9,7 @@ import { choosePractices } from './prescribe'
 import { selfWorkFindings, resetSelfWorkIds, assumptionTest } from './selfwork'
 import { concernFindings, resetConcernIds } from './concern'
 import { familyFindings, resetFamilyIds } from './family'
+import { aftermathFindings, suppressPresentTense, resetAftermathIds } from './aftermath'
 
 export const PACKET_VERSION = '3.0.0'
 
@@ -28,13 +29,14 @@ export function derive(input: AssessmentInput): EvidencePacket {
   resetSelfWorkIds()
   resetConcernIds()
   resetFamilyIds()
+  resetAftermathIds()
 
   const { context, answers, safetyAnswers, skipped } = input
 
   const dimensions = scoreAll(answers, context.lens)
   const axes = computeAxes(context, dimensions, safetyAnswers)
 
-  const findings: Finding[] = [
+  const raw: Finding[] = [
     /* What they actually walked in with, in their own words. First, because a report that has
        not shown it read the problem has not earned anything it says afterwards. */
     ...concernFindings(answers, context),
@@ -51,7 +53,16 @@ export function derive(input: AssessmentInput): EvidencePacket {
        to the person they described. See selfwork.ts — and LAW 2, which is why it is computed here
        rather than asked for in a prompt. */
     ...(context.lens === 'self' ? selfWorkFindings(dimensions, answers) : []),
-  ].sort((a, b) => b.notability - a.notability)
+  ]
+
+  /* After an ending, the relationship is described in the past tense or not at all.
+     Every detector above writes in the present, because every one of them was built for a live
+     relationship — so a man whose partner left in April was told he is "75% committed to this
+     lasting". Those claims are dropped rather than softened, and aftermath.ts writes the past
+     tense ones that replace them. */
+  const findings: Finding[] = suppressPresentTense(raw, context)
+    .concat(aftermathFindings(dimensions, answers, context))
+    .sort((a, b) => b.notability - a.notability)
 
   const quotes = collectQuotes(input)
   const plan = planSections(context, findings, axes, dimensions, answers)
