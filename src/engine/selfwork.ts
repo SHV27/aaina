@@ -297,7 +297,10 @@ export function assumptionFindings(scored: Scored[], answers: AnswerMap): Findin
            The assumption itself is authored text — it has to be, it is a named construct — but a
            section that begins with authored text is a section that could have been written for
            anybody, and the anti-generic gate is right to flag it. Their answer goes first. */
-        `You were asked whether ${lowerFirst(stripFinalStop(item?.text ?? ''))}, and you said ${answerPhrase(answers, r.trigger)}. ` +
+        /* Quoted verbatim rather than folded into the sentence: several items are two sentences
+           ("I have to earn being loved. It is not a given."), and lowercasing the first word of
+           those produced "you were asked whether i have to earn being loved. It is not a given". */
+        `You were asked to agree or disagree with this: "${item?.text ?? ''}" You said ${answerPhrase(answers, r.trigger)}. ` +
         `So here is the one thing worth testing, and it is deliberately only one. The assumption underneath that answer is ${r.assumption}. ` +
         `The test is this: ${r.test}. ` +
         `It is small on purpose. An assumption this old has usually never been checked precisely because checking it properly looks unsurvivable from the inside, so the version that gets done is the version that is almost too small to be frightening. ` +
@@ -335,12 +338,6 @@ function sentence(s: string): string {
 }
 
 const SENTENCE_ENDS = ['.', '!', '?', '…']
-
-/** An item's text reads as a statement; folding it into a question needs the stop removed. */
-function stripFinalStop(s: string): string {
-  const t = s.trim()
-  return SENTENCE_ENDS.includes(t.slice(-1)) ? t.slice(0, -1) : t
-}
 
 /** The label they actually chose on the scale, so the sentence quotes them rather than a number. */
 function answerPhrase(answers: AnswerMap, itemId: string): string {

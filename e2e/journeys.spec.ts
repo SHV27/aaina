@@ -19,14 +19,14 @@ async function shot(page: Page, name: string) {
 }
 
 /** A completed assessment, seeded straight into the store. */
-function seed(): string {
-  return fs.readFileSync(path.join('e2e', 'fixtures', 'arjun.json'), 'utf8')
+function seed(who = 'arjun'): string {
+  return fs.readFileSync(path.join('e2e', 'fixtures', `${who}.json`), 'utf8')
 }
 
-async function seedInto(page: Page) {
+async function seedInto(page: Page, who = 'arjun') {
   await page.addInitScript((payload: string) => {
     try { window.localStorage.setItem('aaina-v3', payload) } catch { /* private mode */ }
-  }, seed())
+  }, seed(who))
 }
 
 /**
@@ -219,6 +219,88 @@ test.describe('the report', () => {
     expect(body).toMatch(/\d{1,3}%/)
     expect(await page.locator('.claim-open').count()).toBeGreaterThan(10)
     await shot(page, 'report-degraded')
+  })
+})
+
+test.describe('the Know Thyself door', () => {
+  /* This half was, until it was walked, leading people into the other one: the self door served
+     relationship questions, and a self reader's report was headlined with a stay-or-leave verdict.
+     Neither failed a single test, because nothing walked it. */
+
+  test('asks about the person, never about a relationship', async ({ page }) => {
+    await page.goto('/begin?lens=self')
+    await expect(page.getByRole('heading', { level: 1 })).not.toContainText(/Where is this/i)
+
+    const body = (await page.locator('main').innerText()).toLowerCase()
+    expect(body).not.toContain('your partner')
+    expect(body).not.toContain('where is this, right now')
+  })
+
+  test('seven questions, then a reading about them', async ({ page }) => {
+    await page.goto('/begin?lens=self')
+
+    for (let i = 0; i < 6; i++) {
+      const choice = page.getByRole('button', { name: i % 2 === 0 ? 'Mostly true' : 'A little true' })
+      await choice.first().click()
+    }
+
+    const own = 'I have a good job and I still cannot explain to anyone why I feel like a visitor in my own life.'
+    await page.locator('textarea').fill(own)
+    await page.getByRole('button', { name: 'Save and continue' }).click()
+
+    // Their own words, quoted back — the rule that holds for every reading Aaina gives.
+    await expect(page.getByText(own)).toBeVisible()
+    await expect(page.getByRole('heading', { name: /Here is what you have already told us/ })).toBeVisible()
+
+    // And the payout must be about them, not about a relationship they never mentioned.
+    const body = (await page.locator('main').innerText()).toLowerCase()
+    expect(body).not.toContain('your partner')
+    expect(body).not.toContain('keeping you here')
+    await shot(page, 'jhalak-self-payout')
+  })
+
+  test('the report is a workshop, not a relationship verdict', async ({ page }) => {
+    await seedInto(page, 'rohit')
+    await writerOffline(page)
+    await page.goto('/report')
+    await reportComplete(page)
+
+    const headings = await page.locator('main section h2').allInnerTexts()
+    const joined = headings.join(' | ')
+
+    // The workshop's own moves, each one backed by a computed finding rather than by a prompt.
+    for (const required of ['The pattern', 'The belief underneath it', 'Where it does not hold', 'The person you described', 'The one assumption worth testing']) {
+      expect(joined, `the self report has no "${required}"`).toContain(required)
+    }
+
+    // No section may render as a heading with nothing under it.
+    for (const h of await page.locator('main section').all()) {
+      const text = (await h.innerText()).trim()
+      expect(text.split(String.fromCharCode(10)).length, `an empty section: ${text}`).toBeGreaterThan(1)
+    }
+
+    const body = (await page.locator('main').innerText()).toLowerCase()
+    expect(body).not.toContain('your partner')
+    expect(body).not.toContain('we do not have enough to give you a reading')
+    expect(body).not.toContain('separate from this relationship')
+    await shot(page, 'report-self')
+  })
+
+  test('ends with named exercises and one testable belief', async ({ page }) => {
+    await seedInto(page, 'rohit')
+    await writerOffline(page)
+    await page.goto('/report')
+    await reportComplete(page)
+
+    // The plan renders directly under the section that introduces it, not pages later.
+    const body = await page.locator('main').innerText()
+    expect(body).toContain('The one assumption worth testing')
+    expect(body).toMatch(/minutes/i)
+
+    // The one-page take-away carries the experiment, which is the only thing on it that asks
+    // the reader to go and find something out.
+    await expect(page.getByText('The belief worth testing, and the test')).toBeVisible()
+    await shot(page, 'takeaway-self')
   })
 })
 
