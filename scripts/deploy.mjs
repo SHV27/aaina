@@ -89,7 +89,21 @@ if (!CHECK_ONLY && env.GROQ_API_KEY) {
 /* ── the deployment Git triggered ───────────────────────────────────────── */
 
 const head = spawnSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).stdout?.trim()
-let live = `https://${project.projectName ?? 'aaina'}.vercel.app`
+
+/* The production domain, asked for rather than guessed.
+   Guessing `${projectName}.vercel.app` produced aaina.vercel.app, which belongs to somebody else
+   and serves a 644-byte placeholder — so the verification passed its fetch and then correctly
+   reported that the page was not Aaina. A deploy check that can be satisfied by a stranger's
+   domain is not a deploy check. */
+let live = env.DEPLOY_URL ?? null
+{
+  const r = await api(`/v9/projects/${projectId}/domains`)
+  const names = (r.body.domains ?? []).map((d) => d.name).filter(Boolean)
+  // Prefer a real custom domain; fall back to the project's own vercel.app alias.
+  const custom = names.find((n) => !n.endsWith('.vercel.app'))
+  live = live ?? (custom ? `https://${custom}` : names[0] ? `https://${names[0]}` : null)
+  if (!live) fail('the project has no production domain')
+}
 
 async function latestProduction() {
   const r = await api(`/v6/deployments?projectId=${projectId}&target=production&limit=10`)

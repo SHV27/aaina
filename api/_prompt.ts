@@ -1,4 +1,4 @@
-import type { WriteRequest } from './_contract'
+import type { WriteRequest } from './_contract.js'
 
 /**
  * THE VOICE.

@@ -1,7 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { WriteRequestZ, MODELS, MAX_OUTPUT_TOKENS, violations, type ModelId, type WriteResponse } from './_contract'
-import { stripEvidenceIds } from './_sanitize'
-import { buildMessages } from './_prompt'
+import { WriteRequestZ, MODELS, MAX_OUTPUT_TOKENS, violations, type ModelId, type WriteResponse } from './_contract.js'
+import { stripEvidenceIds } from './_sanitize.js'
+import { buildMessages } from './_prompt.js'
 
 /**
  * THE CHOKE POINT.
