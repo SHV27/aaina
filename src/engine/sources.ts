@@ -238,6 +238,20 @@ const RAW = S({
     venue: 'Harvard Business Review Press',
     claim: 'Competing commitments and Big Assumptions: a stuck goal is usually protected by a hidden commitment resting on an untested belief. Aaina ends the self lens with one falsifiable test of one Big Assumption.',
   },
+  white1990: {
+    authors: 'White, M., & Epston, D.',
+    year: 1990,
+    title: 'Narrative Means to Therapeutic Ends',
+    venue: 'W. W. Norton',
+    claim: 'The unique outcome: every problem story has moments the problem did not govern, and those moments are the material change is built from. Aaina never states a pattern without finding, in the person’s own answers, a place it did not hold.',
+  },
+  jacobson1996: {
+    authors: 'Jacobson, N. S., Dobson, K. S., Truax, P. A., et al.',
+    year: 1996,
+    title: 'A component analysis of cognitive-behavioral treatment for depression',
+    venue: 'Journal of Consulting and Clinical Psychology 64(2), 295–304',
+    claim: 'The behavioural component alone matched the full package, including at two-year follow-up. Acting differently is not the last step after insight; it is a change mechanism in its own right.',
+  },
   miller2013: {
     authors: 'Miller, W. R., & Rollnick, S.',
     year: 2013,
@@ -372,6 +386,36 @@ const RAW = S({
     title: 'Guru-Chela relationship: The possibility of a therapeutic paradigm',
     venue: 'American Journal of Orthopsychiatry 43(5), 755–766',
     claim: 'In the Indian context a helping relationship is culturally expected to be guiding rather than strictly non-directive. Basis for being directive about the formulation while staying non-directive about stay-or-leave.',
+  },
+
+  /* ── the load nobody counts ── */
+  mospi2024: {
+    authors: 'Ministry of Statistics and Programme Implementation, Government of India',
+    year: 2024,
+    title: 'Time Use Survey',
+    venue: 'National Statistical Office, India (n = 454,192)',
+    claim: 'Married Indian women spend 388 minutes a day on unpaid domestic work; married men spend 47. On food preparation alone it is 219 minutes against 4. When a marriage ends, men’s household time rises from 47 to 79. This is the least-discussed structural fact in Indian marriages, and naming it with a government statistic makes it a measurement rather than an accusation.',
+  },
+  daminger2019: {
+    authors: 'Daminger, A.',
+    year: 2019,
+    title: 'The cognitive dimension of household labor',
+    venue: 'American Sociological Review 84(4), 609–633',
+    claim: 'Household labour has a cognitive dimension with four separable parts — anticipating, identifying options, deciding, and monitoring — and the anticipating and monitoring are both the least visible and the most unequally distributed. Gives a couple language for a load that is otherwise felt and denied.',
+  },
+  larson2015: {
+    authors: 'Larson, G. M., & Sbarra, D. A.',
+    year: 2015,
+    title: 'Participating in research on romantic breakups promotes emotional recovery via changes in self-concept clarity',
+    venue: 'Social Psychological and Personality Science 6(4), 399–406',
+    claim: 'Among 210 recently separated people, repeatedly answering structured questions about the breakup improved recovery — mediated by gains in self-concept clarity, and with no advice given at any point. The closest thing in the literature to a direct warrant for what Aaina does: being asked good questions about your own situation, carefully, is itself an intervention.',
+  },
+  langeslag2018: {
+    authors: 'Langeslag, S. J. E., & Sanchez, M. E.',
+    year: 2018,
+    title: 'Down-regulation of love feelings after a romantic break-up',
+    venue: 'Journal of Experimental Psychology: General 147(5), 720–733',
+    claim: 'Negative reappraisal of an ex-partner lowered love feelings but worsened mood; distraction improved mood without lowering love. The two goals pull in opposite directions, so a person recovering should be told which one a given strategy actually serves rather than offered both as interchangeable.',
   },
 
   /* ── the gap between a modern life and a traditional obligation ── */

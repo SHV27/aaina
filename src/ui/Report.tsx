@@ -1,10 +1,10 @@
-import { useEffect, useState } from 'react'
+import { Fragment, useEffect, useState } from 'react'
 import { Link, useLocation } from 'wouter'
 import { useReport } from '../state/report'
 import { useAnswers } from '../state/answers'
 import { useSafety } from '../state/safety'
 import { compositeOf } from '../engine/derive'
-import { SHAPE_COPY } from '../engine/axes'
+import { SHAPE_COPY, SELF_SHAPE_COPY, selfShapeOf } from '../engine/axes'
 import { DIM_BY_ID } from '../engine/dimensions'
 import type { EvidencePacket, Finding, ReportSection } from '../engine/types'
 import { Claim } from './Claim'
@@ -66,18 +66,27 @@ export function Report() {
         )}
 
         {report.sections.map((section) => (
-          <Section
-            key={section.id}
-            section={section}
-            packet={packet}
-            rederiving={report.rederiving.includes(section.id)}
-          />
+          <Fragment key={section.id}>
+            <Section
+              section={section}
+              packet={packet}
+              rederiving={report.rederiving.includes(section.id)}
+            />
+            {/* The staged plan renders from the engine, not from prose: named interventions
+                chosen for this person and filtered against their safety disclosures.
+
+                It sits directly under the plan section because the writer is given these exact
+                practices and writes that section about them. Rendered at the end of the document
+                instead, the prose introducing the steps and the steps themselves were separated
+                by every remaining section, and read as two different plans. */}
+            {section.id === 'plan' && <Plan packet={packet} />}
+          </Fragment>
         ))}
 
-        {/* The staged plan renders from the engine, not from prose: named interventions chosen
-            for this person and filtered against their safety disclosures. It sits before the
-            take-away so the reader meets the work before the summary of it. */}
-        {!report.running && report.sections.length > 0 && <Plan packet={packet} />}
+        {/* If the plan section was dropped for want of evidence, the work still has to appear. */}
+        {!report.running && report.sections.length > 0 && !report.sections.some((s) => s.id === 'plan') && (
+          <Plan packet={packet} />
+        )}
 
         {/* One page. Clarity is less to think about, not more — a ten-thousand-word report can
             leave an overthinker with more to churn on than they arrived with. */}
@@ -105,9 +114,15 @@ export function Report() {
  * the most important thing this product can tell someone becomes invisible.
  */
 function Verdict({ packet }: { packet: EvidencePacket }) {
-  const shape = SHAPE_COPY[packet.axes.shape]
-  const comp = compositeOf(packet)
   const isRelationship = packet.context.lens === 'relationship'
+  /* A self-knowledge report has no verdict to give. It has a shape — how clearly somebody sees
+     themselves, and how kindly they treat what they see — and those are separable. Rendering the
+     relationship verdict here put "we do not have enough to give you a reading" at the top of a
+     perfectly complete self report. */
+  const shape = isRelationship
+    ? SHAPE_COPY[packet.axes.shape]
+    : SELF_SHAPE_COPY[selfShapeOf(packet.dimensions)]
+  const comp = compositeOf(packet)
 
   return (
     <section className="wrap" style={{ paddingBottom: '2rem' }}>

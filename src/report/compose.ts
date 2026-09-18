@@ -1,7 +1,8 @@
 import type { EvidencePacket, SectionPlan, ReportSection } from '../engine/types'
 import type { WriteRequest, WriteResponse } from '../../api/_contract'
 import { DIM_BY_ID } from '../engine/dimensions'
-import { SHAPE_COPY } from '../engine/axes'
+import { PRACTICE_BY_ID } from '../engine/practices'
+import { SHAPE_COPY, SELF_SHAPE_COPY, selfShapeOf } from '../engine/axes'
 import { short } from '../engine/sources'
 import { fallbackSection, resetFallbackIds } from './fallback'
 
@@ -56,7 +57,10 @@ function toRequest(
     .map((id) => packet.findings.find((f) => f.id === id))
     .filter((f): f is NonNullable<typeof f> => !!f && f.accepted)
 
-  const shape = SHAPE_COPY[packet.axes.shape]
+  const shape =
+    packet.context.lens === 'relationship'
+      ? SHAPE_COPY[packet.axes.shape]
+      : SELF_SHAPE_COPY[selfShapeOf(packet.dimensions)]
 
   /* Send the dimensions this section can actually use, not all of them. The ones its findings
      touch, plus the handful that carry the most weight in the composite — a section about
@@ -71,6 +75,28 @@ function toRequest(
   const dimensions = scored.filter(
     (d) => wanted.has(d.id) || headline.includes(d.id) || plan.id === 'standing',
   )
+
+  /* The plan section, and only it, is told what the engine prescribed. Every other section would
+     pay ~400 tokens out of a rate-limit bucket for material it must not mention. */
+  const practices =
+    plan.id === 'plan'
+      ? packet.practices
+          .map((sp) => ({ sp, pr: PRACTICE_BY_ID[sp.practiceId] }))
+          .filter((x): x is { sp: typeof x.sp; pr: NonNullable<typeof x.pr> } => !!x.pr)
+          .map(({ sp, pr }) => ({
+            id: pr.id,
+            title: pr.title,
+            purpose: pr.purpose,
+            because: sp.because,
+            stage: pr.stage,
+            minutes: pr.minutes,
+            needsPartner: pr.needsPartner,
+            firstTime: pr.firstTime,
+            ifItGoesBadly: pr.ifItGoesBadly,
+            marker: pr.marker,
+            evidenceIds: sp.evidenceIds,
+          }))
+      : undefined
 
   return {
     section: { id: plan.id, title: plan.title, intent: plan.intent, words: plan.words },
@@ -116,6 +142,7 @@ function toRequest(
     quotes: packet.quotes.slice(0, 8).map((q) => ({ id: q.id, label: q.label, detail: q.detail })),
     dimensions: dimensions.map((d) => ({ id: d.id, label: DIM_BY_ID[d.id].label, pomp: d.pomp, band: d.band, meaning: DIM_BY_ID[d.id].meaning })),
     alreadyCovered,
+    ...(practices && practices.length ? { practices } : {}),
     rejected: packet.findings.filter((f) => !f.accepted).map((f) => f.statement),
     fingerprint: packet.fingerprint,
     startRung,
@@ -128,6 +155,7 @@ function validate(res: WriteResponse, req: WriteRequest): ReportSection['paragra
     ...req.findings.flatMap((f) => f.evidence.map((e) => e.id)),
     ...req.quotes.map((q) => q.id),
     ...req.dimensions.map((d) => "ev:dim:" + d.id),
+    ...(req.practices ?? []).flatMap((p) => p.evidenceIds),
   ])
   return res.paragraphs
     .map((p, i) => ({

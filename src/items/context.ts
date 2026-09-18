@@ -101,3 +101,22 @@ export const JHALAK_ORDER = [
   'pcom_2',     // asymmetry: who is holding on harder
   'txt_why',    // their own words
 ] as const
+
+/**
+ * The self lens gets its own seven.
+ *
+ * Caught by walking the app: somebody who chose "Know thyself" was being asked "Where is this,
+ * right now?" about a relationship, then five more relationship questions. The self door led
+ * straight into the other half of the product. These seven are the highest-information self items
+ * — the gap between self-knowledge and self-treatment, and the two that generate the first
+ * contradiction — so a two-minute glimpse can still find something true.
+ */
+export const JHALAK_SELF_ORDER = [
+  'scc_1',      // do you know what you are like
+  'scc_2',      // does that change depending on who you are with
+  'cbs_2',      // do you have to earn being loved
+  'sco_2',      // are you harder on yourself than anyone else
+  'rum_3',      // can you put it down
+  'aut_2',      // is this a life someone else designed
+  'txt_why',    // their own words
+] as const

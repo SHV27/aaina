@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link } from 'wouter'
-import { JHALAK_ORDER, item as getItem } from '../items'
+import { jhalakFor, item as getItem } from '../items'
+import { SelfPayout } from './JhalakSelf'
 import { useAnswers } from '../state/answers'
 import { Question } from './Question'
 import { Plate, Wordmark, AmbientSupport } from './bits'
@@ -25,7 +26,7 @@ export function Jhalak({ onDone }: { onDone: () => void }) {
   const [idx, setIdx] = useState(0)
   const [reveal, setReveal] = useState(false)
 
-  const ids = [...JHALAK_ORDER]
+  const ids = [...jhalakFor(store.context.lens)]
   const item = ids[idx] ? getItem(ids[idx]!) : null
 
   if (reveal) return <Payout onContinue={onDone} />
@@ -92,6 +93,8 @@ export function Jhalak({ onDone }: { onDone: () => void }) {
 function Payout({ onContinue }: { onContinue: () => void }) {
   const store = useAnswers()
   const a = store.answers
+  // The Know Thyself door gets its own reading; a relationship verdict there is nonsense.
+  if (store.context.lens === 'self') return <SelfPayout onContinue={onContinue} />
 
   const p = (id: string): number | null => {
     const v = a[id]?.value

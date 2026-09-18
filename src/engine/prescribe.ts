@@ -63,18 +63,36 @@ export function choosePractices(
 
   const accepted = findings.filter((f) => f.accepted)
 
+  /* Two practices that name the same weak dimension produce the same sentence, and a plan whose
+     steps all say "you are at 15% on how clearly you see yourself" is a list wearing a sequence's
+     clothes. Each practice claims the worst dimension it treats that nothing earlier has claimed. */
+  const claimed = new Set<DimensionId>()
+
   return chosen.map(({ practice: p, substitutedFor }) => {
     // The finding this practice answers — so the plan points back at the analysis.
     const finding = accepted.find((f) => f.dimensions.some((d) => p.indicatedFor.includes(d))) ?? null
 
-    // The dimension it targets that this person is actually worst on.
-    const target = weakest.find((d) => p.indicatedFor.includes(d))
+    // The dimension it targets that this person is actually worst on, and that is still unclaimed.
+    const fresh = weakest.find((d) => p.indicatedFor.includes(d) && !claimed.has(d))
+    const target = fresh ?? weakest.find((d) => p.indicatedFor.includes(d))
+    if (target) claimed.add(target)
     const targetScore = target ? scored.find((s) => s.id === target) : undefined
 
-    const because = targetScore && target
-      ? `You are at ${targetScore.pomp}% on ${DIM_BY_ID[target].label.toLowerCase()}, which is ${
-          weakest.indexOf(target) === 0 ? 'the lowest thing in your profile' : `among the lowest things you reported`
-        }. This is the published intervention aimed at exactly that.`
+    /* Say the number in the direction it actually runs.
+     *
+     * POMP always points along the CONSTRUCT, not toward the good end — 85% on Overthinking is the
+     * worst score in the profile, and the old sentence read "you are at 85% on overthinking, which
+     * is among the lowest things you reported", which is the opposite of true and is the kind of
+     * error that costs a reader their trust in every other number on the page. */
+    const dim = target ? DIM_BY_ID[target] : undefined
+    const rank = target ? weakest.indexOf(target) : -1
+    const place = rank === 0 ? 'the hardest thing in your whole profile' : 'among the hardest things you reported'
+    const direction = dim && !dim.higherIsBetter ? ', and on that scale a high number is the costly direction' : ''
+
+    const because = targetScore && dim
+      ? (fresh
+          ? `You are at ${targetScore.pomp}% on ${dim.label.toLowerCase()}${direction} — ${place}. This is the published intervention aimed at exactly that.`
+          : `This one works on the same ${targetScore.pomp}% — ${dim.label.toLowerCase()} — from a different angle: the step above changes what you notice, and this one changes what you do about it.`)
       : `Chosen for what you asked for: ${p.purpose.toLowerCase()}`
 
     const evidenceIds = [

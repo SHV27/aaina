@@ -216,3 +216,62 @@ export const SHAPE_COPY: Record<VerdictShape, { title: string; lead: string; sou
     sources: ['heyman2001'],
   },
 }
+
+/* ────────────────────────────  the self lens  ──────────────────────────── */
+
+/**
+ * The self lens must never be handed a relationship verdict.
+ *
+ * Caught by walking it: somebody who came through the "Know thyself" door saw
+ * "We do not have enough to give you a reading" as the headline of their report — because the
+ * verdict card was rendering a stay-or-leave shape computed from relationship dimensions that
+ * were never asked. A self-knowledge report has no verdict to give; what it has is a shape, and
+ * the shape is about how clearly somebody sees themselves and how kindly they treat what they see.
+ *
+ * Those two are separable and the combination is the finding. Campbell's work put self-concept
+ * clarity at the centre of self-knowledge; Neff's put self-compassion at the centre of what people
+ * do with it. Knowing yourself precisely and treating yourself badly is a different situation from
+ * not knowing yourself at all, and it needs a different report.
+ */
+export type SelfShape = 'clear-and-kind' | 'clear-and-harsh' | 'unclear-and-kind' | 'unclear-and-harsh' | 'thin'
+
+export function selfShapeOf(scored: Scored[]): SelfShape {
+  const get = (id: DimensionId) => scored.find((s) => s.id === id && !s.thin)
+  const clarity = get('selfConceptClarity')
+  const kindness = get('selfCompassion')
+  if (!clarity || !kindness) return 'thin'
+  const clear = clarity.pomp >= 50
+  const kind = kindness.pomp >= 50
+  if (clear && kind) return 'clear-and-kind'
+  if (clear && !kind) return 'clear-and-harsh'
+  if (!clear && kind) return 'unclear-and-kind'
+  return 'unclear-and-harsh'
+}
+
+export const SELF_SHAPE_COPY: Record<SelfShape, { title: string; lead: string; sources: string[] }> = {
+  'clear-and-kind': {
+    title: 'You see yourself clearly, and you are not cruel about what you see',
+    lead: 'That combination is less common than it sounds. Most people who can describe themselves accurately do it in the voice of a prosecutor. What follows is therefore not about learning to see straight — you already do — but about the distance between what you can see and what you have acted on.',
+    sources: ['campbell1996', 'neff2003'],
+  },
+  'clear-and-harsh': {
+    title: 'You know exactly who you are, and you hold it against yourself',
+    lead: 'Your self-knowledge is not the problem here, and any advice built on "get to know yourself better" will miss you entirely. You already have the description. What you do not have is a way of holding it that leaves you able to act. Precision and cruelty are separable, and you have inherited both.',
+    sources: ['campbell1996', 'neff2003'],
+  },
+  'unclear-and-kind': {
+    title: 'You are gentle with a self you cannot quite make out',
+    lead: 'The kindness is real and it is doing more work than you realise. What is missing is definition — a sense of yourself steady enough that other people’s readings of you do not move it. That is buildable, and it is built by evidence rather than by reflection.',
+    sources: ['campbell1996', 'neff2003'],
+  },
+  'unclear-and-harsh': {
+    title: 'You are hard on a version of yourself you have never actually seen clearly',
+    lead: 'This is the difficult combination, and it is also the most common one. The judging happens anyway — it does not wait for the evidence. Which means the person being convicted is not you; it is a sketch. The work below is about getting a clearer look before passing another sentence.',
+    sources: ['campbell1996', 'neff2003', 'treynor2003'],
+  },
+  thin: {
+    title: 'There is not enough here yet for a picture, and that is the honest answer',
+    lead: 'Too much was left unanswered for us to say anything about the shape of how you see yourself. Everything below is still true and still yours. Adding the sections you skipped would change what we can say.',
+    sources: ['campbell1996'],
+  },
+}

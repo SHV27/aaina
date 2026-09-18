@@ -65,6 +65,22 @@ export function Science() {
         </p>
       </Block>
 
+      <Block title="Why being asked good questions helps at all">
+        <p>
+          It is reasonable to wonder whether answering questions can do anything by itself. The
+          closest thing to a direct test: Larson and Sbarra (2015) followed 210 recently separated
+          people who repeatedly answered structured questions about their breakup, and gave them{' '}
+          <strong>no advice at any point</strong>. They recovered better than controls, and the
+          effect ran through gains in <em>self-concept clarity</em> — how clearly they could see
+          themselves.
+        </p>
+        <p style={{ color: 'var(--color-kajal-soft)' }}>
+          That is the mechanism Aaina is built on. Being asked careful questions about your own
+          situation, and then shown what your answers actually say, is not a preamble to the help.
+          A good part of it is the help.
+        </p>
+      </Block>
+
       <Block title="What the percentages actually are">
         <p>
           Every percentage in Aaina is a <strong>POMP score</strong> — Percentage of Maximum

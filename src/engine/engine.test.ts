@@ -3,7 +3,7 @@ import { derive, withReaction, fingerprint } from './derive'
 import { itemPomp, scoreDimension, composite, scoreAll } from './score'
 import { DIMENSIONS, DIM_BY_ID, deriveWeight, weightProvenance, bandOf } from './dimensions'
 import { SOURCES, cite } from './sources'
-import { readSafety } from './axes'
+import { readSafety, selfShapeOf, SELF_SHAPE_COPY } from './axes'
 import { l1WordShare, L1_CAP } from './plan'
 import { PRACTICES, PRACTICE_BY_ID } from './practices'
 import { ALL_ITEMS, SAFETY_ITEMS, ITEM_BY_ID, runningOrder, totalItems } from '../items'
@@ -191,6 +191,12 @@ describe('item bank', () => {
     const used = new Set<string>()
     for (const i of all) i.sources.forEach((s) => used.add(s))
     for (const d of DIMENSIONS) d.sources.forEach((s) => used.add(s))
+    for (const p of PRACTICES) p.sources.forEach((s) => used.add(s))
+    // Findings cite sources too, and a finding that only fires for one kind of reader is exactly
+    // where a dead citation would hide. Derive both lenses and count what they actually cite.
+    for (const packet of [derive(rohit()), derive(arjun())]) {
+      for (const f of packet.findings) f.sources.forEach((s) => used.add(s))
+    }
     // Sources cited only in prose constants (axes/plan/profile) are legitimate too.
     const proseOnly = new Set([
       'forer1949', 'snyder1972', 'baillargeon1984', 'finkel2012', 'montoya2008', 'joel2017',
@@ -198,7 +204,7 @@ describe('item bank', () => {
       'gollwitzer2006', 'oettingen2014', 'doherty2016', 'doss2016', 'christensen2004',
       'ipip', 'campbell2003', 'cues', 'hendrick1988', 'topp2015', 'sabri2024', 'who2013',
       'stark2007', 'dazzi2014', 'cohen1999', 'funk2007', 'le2010',
-      'singelis1994', 'pillemer2020', 'allendorf2013',
+      'singelis1994', 'pillemer2020', 'allendorf2013', 'larson2015',
     ])
     const orphans = Object.keys(SOURCES).filter((k) => !used.has(k) && !proseOnly.has(k))
     expect(orphans, `orphaned sources: ${orphans.join(', ')}`).toEqual([])
@@ -864,6 +870,29 @@ describe('the practice library prescribes real interventions', () => {
     expect(PRACTICE_BY_ID['timeout']!.evidence).toBe('clinical')
   })
 
+  it('never hands a safety-planning exercise to somebody who disclosed nothing', () => {
+    // A live run gave "Leaving the room, on your own terms" and an accountability-for-hurting-
+    // someone exercise to a person whose relationship had simply ended. The first is alarming
+    // and the second is an accusation. Both must be unreachable unless the answers reach for them.
+    for (const persona of [arjun(), priya(), aarti(), meera(), rohit()]) {
+      const ids = derive(persona).practices.map((s) => s.practiceId)
+      expect(ids, 'safety planning offered without a safety signal').not.toContain('unilateral-exit')
+      expect(ids, 'accountability offered without a perpetration disclosure').not.toContain('accountability')
+    }
+    const ended = arjun()
+    const ids = derive({ ...ended, context: { ...ended.context, stage: 'ended', help: ['recover'] } })
+      .practices.map((s) => s.practiceId)
+    expect(ids).not.toContain('unilateral-exit')
+    expect(ids).not.toContain('accountability')
+  })
+
+  it('still offers them the moment the answers do reach for them', () => {
+    expect(derive(withSafetyDisclosure(arjun())).practices.map((s) => s.practiceId)).toContain('unilateral-exit')
+    const base = arjun()
+    const perp = derive({ ...base, safetyAnswers: { saf_perp: ans('saf_perp', 5) } })
+    expect(perp.practices.map((s) => s.practiceId)).toContain('accountability')
+  })
+
   it('routes in-law conversations through the spouse whose parents they are', () => {
     // NFHS-5 records "disrespects her in-laws" as the most widely endorsed justification for
     // wife-beating, which makes the daughter-in-law delivering it the dangerous version.
@@ -871,5 +900,138 @@ describe('the practice library prescribes real interventions', () => {
     expect(p.steps.join(' ')).toMatch(/own child/i)
     expect(p.suppressedBy!.physicalViolence).toBeTruthy()
     expect(p.suppressedBy!.familyIsTheSourceOfHarm).toBeTruthy()
+  })
+})
+
+/* ══════════════════════════════════════════════════════════════════════════
+   THE KNOW THYSELF DOOR.
+
+   Both of these were invisible to the suite and obvious the moment the app was
+   walked: the self door asked relationship questions, and a self-lens reader was
+   shown a stay-or-leave verdict as the headline of their report.
+   ══════════════════════════════════════════════════════════════════════════ */
+describe('the self lens is a self-knowledge product, not the other half wearing a hat', () => {
+  const selfCtx = { ...CTX, lens: 'self' as const, help: ['understand' as const] }
+
+  it('opens with self questions, never with "where is this relationship"', () => {
+    const first = runningOrder(selfCtx).find((c) => c.chapter === 'jhalak')!.items
+    expect(first.map((i) => i.id)).not.toContain('ctx_stage')
+    for (const i of first) {
+      if (!i.dimension) continue
+      expect(DIM_BY_ID[i.dimension].lens, `${i.id} is a relationship item in the self Jhalak`).not.toBe('relationship')
+    }
+  })
+
+  it('its glimpse still finds a real tension from seven answers', () => {
+    const first = runningOrder(selfCtx).find((c) => c.chapter === 'jhalak')!.items.map((i) => i.id)
+    // clarity and self-treatment must both be reachable, or the glimpse has nothing to contrast
+    expect(first).toContain('scc_1')
+    expect(first).toContain('sco_2')
+    expect(first.some((id) => ITEM_BY_ID[id]!.format === 'freetext')).toBe(true)
+  })
+
+  it('never scores a relationship dimension it never asked about', () => {
+    const p = derive(rohit())
+    for (const s of p.dimensions) {
+      expect(DIM_BY_ID[s.id].lens, `${s.id} scored in a self report`).not.toBe('relationship')
+    }
+  })
+
+  it('has a reading of its own — clarity and self-treatment, separated', () => {
+    const shapes = new Set<string>()
+    for (const clarity of [20, 80]) {
+      for (const kindness of [20, 80]) {
+        shapes.add(
+          selfShapeOf([
+            { id: 'selfConceptClarity', pomp: clarity, band: 'mixed', itemIds: ['scc_1'], answered: 5, thin: false },
+            { id: 'selfCompassion', pomp: kindness, band: 'mixed', itemIds: ['sco_1'], answered: 5, thin: false },
+          ]),
+        )
+      }
+    }
+    // four genuinely different readings, because the two dimensions are separable
+    expect(shapes.size).toBe(4)
+  })
+
+  it('says so honestly when there is not enough to read', () => {
+    expect(selfShapeOf([])).toBe('thin')
+  })
+
+  it('every self reading is written for a person, not about a relationship', () => {
+    for (const s of Object.values(SELF_SHAPE_COPY)) {
+      expect(s.title.length).toBeGreaterThan(20)
+      expect(s.lead.length).toBeGreaterThan(120)
+      expect(s.title.toLowerCase()).not.toMatch(/\b(partner|relationship|them|leaving)\b/)
+      expect(s.lead.toLowerCase()).not.toMatch(/\b(your partner|stay or|leaving them)\b/)
+    }
+  })
+
+  it('reaches the workshop ingredients: belief, pattern, exception, future self, a test', () => {
+    // The goal state is that somebody walks out knowing their beliefs, the patterns underneath,
+    // where they are wrong, who they want to become, and what has to change.
+    const ids = derive(rohit()).plan.map((s) => s.id)
+    for (const required of ['pattern', 'belief', 'exception', 'future', 'assumption', 'plan']) {
+      expect(ids, `the self report has no "${required}" section`).toContain(required)
+    }
+  })
+
+  it('ends with named exercises rather than advice', () => {
+    const p = derive(rohit())
+    expect(p.practices.length).toBeGreaterThanOrEqual(3)
+    for (const s of p.practices) {
+      const pr = PRACTICE_BY_ID[s.practiceId]!
+      expect(pr.needsPartner, `${pr.id} needs a partner in a self-knowledge report`).toBe(false)
+      expect(pr.steps.length).toBeGreaterThanOrEqual(4)
+    }
+  })
+})
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   ORIENTATION. POMP points along the CONSTRUCT, never toward the good end.
+
+   This has now produced two shipped-quality bugs — a plan step that told somebody 85% on
+   Overthinking was "among the lowest things you reported", and a unique-outcome finding that
+   picked the single strongest instance of the pattern and announced it as the exception. Both
+   read as confident nonsense, which is worse than a missing section.
+   ══════════════════════════════════════════════════════════════════════════ */
+describe('a number is never described in the wrong direction', () => {
+  it('the exception is a place the pattern did NOT run, never its worst instance', () => {
+    for (const fx of [rohit, arjun, priya, meera]) {
+      const packet = derive(fx())
+      const byId = new Map(packet.dimensions.map((d) => [d.id, d]))
+      for (const f of packet.findings.filter((x) => x.id.startsWith('f:exc:'))) {
+        const dim = byId.get(f.dimensions[0]!)!
+        const d = DIM_BY_ID[dim.id]
+        const item = f.evidence.find((e) => e.id.startsWith('ev:item:'))!
+        const itemId = item.id.replace('ev:item:', '')
+        const raw = fx().answers[itemId]!.value as number
+        const oriented = d.higherIsBetter ? itemPomp(itemId, raw) : 100 - itemPomp(itemId, raw)
+        const dimOriented = d.higherIsBetter ? dim.pomp : 100 - dim.pomp
+        expect(oriented, `${itemId} is not an exception to ${dim.id}`).toBeGreaterThan(dimOriented)
+      }
+    }
+  })
+
+  it('a plan never calls a costly-direction score a low one', () => {
+    for (const fx of [rohit, arjun, priya, meera, aarti]) {
+      const packet = derive(fx())
+      for (const sp of packet.practices) {
+        if (!sp.because.includes('You are at ')) continue
+        // Match by label rather than by regex: one label is "Growing, together or apart", and a
+        // pattern that stops at punctuation quietly reports half a dimension name.
+        const dim = DIMENSIONS.find((d) => sp.because.includes(`on ${d.label.toLowerCase()}`))
+        expect(dim, `plan names no known dimension in: ${sp.because}`).toBeTruthy()
+        if (dim!.higherIsBetter) continue
+        // A high score on a costly-direction scale must say so, or the sentence reads as a lie.
+        expect(sp.because, `"${dim!.label}" needs its direction named`).toContain('costly direction')
+      }
+    }
+  })
+
+  it('never says the same thing twice as the reason for two different steps', () => {
+    for (const fx of [rohit, arjun, priya, meera, aarti]) {
+      const reasons = derive(fx()).practices.map((p) => p.because)
+      expect(new Set(reasons).size, 'two steps share a reason').toBe(reasons.length)
+    }
   })
 })

@@ -9,7 +9,7 @@ export default defineConfig({
   build: { target: 'es2022', cssMinify: 'lightningcss', sourcemap: false },
   test: {
     environment: 'happy-dom',
-    include: ['src/**/*.test.ts', 'src/**/*.test.tsx'],
+    include: ['src/**/*.test.ts', 'src/**/*.test.tsx', 'scripts/**/*.test.ts'],
     restoreMocks: true,
   },
 } as never)

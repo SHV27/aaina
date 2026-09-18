@@ -165,7 +165,24 @@ export const useAnswers = create<AnswersState>()(
     }),
     {
       name: 'aaina-v3',
-      version: 3,
+      /**
+       * Bump this whenever Context gains a field, and fill the field in `migrate`.
+       *
+       * Caught by opening the real app against state saved by an earlier build: `context.help`
+       * did not exist then, so `slotsFor` read `undefined.length` and every returning user got a
+       * permanent loading screen instead of their report. Persisted state outlives the code that
+       * wrote it, and a store with no migration is a crash waiting for its next deploy.
+       */
+      version: 4,
+      migrate: (persisted: unknown, from: number) => {
+        const s = (persisted ?? {}) as Partial<AnswersState>
+        if (from < 4) {
+          const ctx = { ...EMPTY_CONTEXT, ...(s.context ?? {}) } as Context
+          if (!Array.isArray(ctx.help) || ctx.help.length === 0) ctx.help = suggestedHelp(ctx.stage)
+          return { ...s, context: ctx }
+        }
+        return s
+      },
       storage: safeStorage(),
       // `storageWorks` is a runtime fact about this browser, never a persisted one.
       partialize: (s) => ({

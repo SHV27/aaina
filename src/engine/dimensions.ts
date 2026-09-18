@@ -213,7 +213,7 @@ export const DIMENSIONS: Dimension[] = [
   D({
     id: 'lifeSatisfaction',
     label: 'How life is going overall',
-    meaning: 'Your life as a whole, separate from this relationship. It matters more than most people expect.',
+    meaning: 'Your life as a whole, separate from whatever brought you here. It matters more than most people expect.',
     lens: 'both',
     sources: ['diener1985', 'topp2015', 'joel2020'],
     higherIsBetter: true,

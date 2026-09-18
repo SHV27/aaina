@@ -31,9 +31,10 @@ function eligible(slot: Slot, f: Finding, axes: FourAxes): boolean {
     case 'deep': return f.finnLevel >= 2 && (f.kind === 'contradiction' || f.kind === 'configural')
     case 'hold': return f.dimensions.some((d) => d === 'constraint' || d === 'alternatives' || d === 'familyApproval') || axes.shape === 'held-by-cost'
     case 'exclusion': return f.kind === 'exclusion'
-    case 'future': return f.dimensions.includes('futureSelfContinuity') || f.dimensions.includes('valuesLived')
+    case 'future': return f.kind !== 'assumption' && (f.dimensions.includes('futureSelfContinuity') || f.dimensions.includes('valuesLived'))
     case 'family': return f.dimensions.includes('familyApproval') || f.dimensions.includes('constraint')
-    case 'rest': return true
+    case 'assumption': return f.kind === 'assumption'
+    case 'rest': return f.kind !== 'assumption'
   }
 }
 
@@ -64,9 +65,21 @@ export function planSections(
   const used = new Set<string>()
   const out: SectionPlan[] = []
 
-  // Two passes: the theme slot gets first refusal on the single most notable Level-3 finding,
-  // because the "aha" must be the best thing we have, not whatever was left over.
-  const ordered = [...slots].sort((a, b) => (a.wants === 'theme' ? -1 : b.wants === 'theme' ? 1 : 0))
+  /* Claim order, which is not document order.
+   *
+   * The theme slot gets first refusal on the single most notable Level-3 finding, because the
+   * "aha" must be the best thing we have and not whatever was left over.
+   *
+   * Then every slot that wants something SPECIFIC, in document order. Then the greedy ones last.
+   * That ordering is load-bearing: `rest` matches every finding, so a `rest` slot sitting earlier
+   * in the document silently eats the material a later specific slot was built for — which is
+   * exactly what happened to the self lens, where "Your profile, read out" swallowed the future-self
+   * finding and "The person you described" was then dropped for having no evidence. */
+  const priority = (w: Slot['wants']) => (w === 'theme' ? 0 : w === 'none' ? 3 : w === 'rest' ? 2 : 1)
+  const ordered = [...slots]
+    .map((s, i) => ({ s, i }))
+    .sort((a, b) => priority(a.s.wants) - priority(b.s.wants) || a.i - b.i)
+    .map((x) => x.s)
   const assignments = new Map<string, string[]>()
 
   for (const slot of ordered) {
@@ -147,6 +160,28 @@ export function limitsFor(ctx: Context, axes: FourAxes, scored: Scored[]): strin
       `Some sections were left thin${thin.length ? ` — particularly ${thin.slice(0, 3).join(', ')}` : ''}. ` +
       'Those are reported but kept out of the overall number rather than guessed at.',
     )
+  }
+
+  /* The self lens gets its own limits. A person who came to understand themselves has no business
+     being told what this cannot say about a relationship they did not mention — and the honest
+     limits of a self-knowledge assessment are genuinely different ones. */
+  if (ctx.lens === 'self') {
+    out.push(
+      'This describes you as you are at the moment you answered. A mood, a bad fortnight, or the ' +
+      'particular thing that made you open this can all tilt an hour of questions. If you answered ' +
+      'on an unusually hard day, read the numbers as that day rather than as your life.',
+    )
+    out.push(
+      'Nothing here is a diagnosis and nothing here predicts what you will do. These are dimensions, ' +
+      'not types — there is no category being assigned to you, and the point of a dimension is that ' +
+      'you can be somewhere on it and then be somewhere else.',
+    )
+    out.push(
+      'What this cannot see is your history. It can tell you a pattern runs and what it appears to be ' +
+      'protecting; it cannot tell you when it started or what happened. That part is genuinely not ' +
+      'available from an assessment, and anyone who tells you otherwise from eighty answers is guessing.',
+    )
+    return out
   }
 
   out.push(

@@ -23,7 +23,7 @@ export interface Slot {
   title: string
   intent: string
   words: number
-  wants: 'none' | 'strengths' | 'theme' | 'cycle' | 'deep' | 'hold' | 'exclusion' | 'future' | 'family' | 'rest'
+  wants: 'none' | 'strengths' | 'theme' | 'cycle' | 'deep' | 'hold' | 'exclusion' | 'future' | 'family' | 'assumption' | 'rest'
   minFindings?: number
 }
 
@@ -100,6 +100,7 @@ const NOT: Slot = {
     'Exclusion claims — what is demonstrably NOT the problem here, given their answers. Costly, falsifiable, and the strongest evidence of real discrimination. Name the explanation people around them have probably already offered, and rule it out.',
   words: 520,
   wants: 'exclusion',
+  minFindings: 1,
 }
 
 const STANDING: Slot = {
@@ -227,7 +228,8 @@ const MIDDLE: Record<HelpMode, Slot[]> = {
 export function slotsFor(lens: Lens, help: HelpMode[], familyGap: boolean): Slot[] {
   if (lens === 'self') return SELF_SLOTS
 
-  const modes = help.length ? help : (['understand'] as HelpMode[])
+  // Never trust the shape of persisted state: an old store, a hand-edited link, a bad migration.
+  const modes = Array.isArray(help) && help.length ? help : (['understand'] as HelpMode[])
   const middle: Slot[] = []
   const seen = new Set<string>()
   for (const m of modes) {
@@ -257,15 +259,15 @@ const SELF_SLOTS: Slot[] = [
   { id: 'opening', title: 'What you came here with', intent: 'Their own words back, and the question underneath the question.', words: 380, wants: 'none' },
   { id: 'basis', title: 'What this is built on', intent: 'What was measured and what that supports. No claims yet.', words: 320, wants: 'none' },
   { id: 'ground', title: 'What you stand on', intent: 'Their values in their own words, including the time acting on one cost them something. The foundation of everything after.', words: 700, wants: 'strengths', minFindings: 1 },
-  { id: 'working', title: 'What is already strong', intent: 'Strengths with receipts. Specific, evidenced, not reassurance.', words: 620, wants: 'strengths' },
+  { id: 'working', title: 'What is already strong', intent: 'Strengths with receipts. Specific, evidenced, not reassurance.', words: 620, wants: 'strengths', minFindings: 1 },
   { id: 'turn', title: 'Before the next part', intent: 'The warning shot. One paragraph, then stop.', words: 140, wants: 'none' },
   { id: 'pattern', title: 'The pattern', intent: 'The central finding as the "aha", in their vocabulary. Externalise it — a pattern they run, never a thing they are.', words: 950, wants: 'theme', minFindings: 1 },
   { id: 'belief', title: 'The belief underneath it', intent: "The core belief the pattern protects. Kegan's competing commitment: the pattern is doing a job. Name the job.", words: 900, wants: 'deep' },
   { id: 'exception', title: 'Where it does not hold', intent: 'The unique outcome — a place in their own answers where the pattern did NOT run. Never present a pattern without its exception.', words: 600, wants: 'exclusion' },
-  { id: 'not', title: 'What you are not', intent: 'Exclusion claims from their own profile. What would be true of most people but is demonstrably not true of them.', words: 520, wants: 'exclusion' },
+  { id: 'not', title: 'What you are not', intent: 'Exclusion claims from their own profile. What would be true of most people but is demonstrably not true of them.', words: 520, wants: 'exclusion', minFindings: 1 },
   { id: 'standing', title: 'Your profile, read out', intent: 'The dimensions in plain language, with what stands out within their own shape rather than against anyone else.', words: 700, wants: 'rest' },
   { id: 'future', title: 'The person you described', intent: 'Their future self in their own words, and the specific, named distance between here and there.', words: 850, wants: 'future' },
-  { id: 'assumption', title: 'The one assumption worth testing', intent: 'A single Big Assumption made falsifiable, with the smallest safe experiment that would test it. One, not a list.', words: 700, wants: 'none' },
+  { id: 'assumption', title: 'The one assumption worth testing', intent: 'The Big Assumption the engine identified, and the one small experiment that would test it — both are given to you in the findings. Your job is to make the experiment feel doable rather than brave, and to say plainly what a result either way would mean. One assumption, one test. Never a list, never a second suggestion.', words: 700, wants: 'assumption', minFindings: 1 },
   { id: 'plan', title: 'What to actually do, in order', intent: 'A sequenced plan in if-then form, each step tied to a finding, with what to do when a step goes badly.', words: 800, wants: 'rest' },
   { id: 'limits', title: 'What this cannot tell you', intent: 'Honest limits.', words: 360, wants: 'none' },
 ]

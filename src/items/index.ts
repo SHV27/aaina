@@ -1,12 +1,12 @@
 import type { Item, Context, ChapterId, Lens } from '../engine/types'
-import { CONTEXT_ITEMS, JHALAK_ORDER } from './context'
+import { CONTEXT_ITEMS, JHALAK_ORDER, JHALAK_SELF_ORDER } from './context'
 import { CONCERN_ITEMS } from './concern'
 import { RELATIONSHIP_ITEMS } from './relationship'
 import { SPINE_ITEMS, SELF_ITEMS, VALUES_ITEMS, FUTURE_ITEMS } from './self'
 import { SAFETY_ITEMS } from './safety'
 
 export * from './scales'
-export { STAGE_OPTIONS, JHALAK_ORDER } from './context'
+export { STAGE_OPTIONS, JHALAK_ORDER, JHALAK_SELF_ORDER } from './context'
 export { CONCERN_ITEMS, suggestedHelp, HELP_BY_ID } from './concern'
 export { VALUE_OPTIONS } from './self'
 export { SAFETY_ITEMS, SAFETY_PREAMBLE, AMBIENT_SUPPORT } from './safety'
@@ -25,6 +25,11 @@ export const ALL_ITEMS: Item[] = [
 export const ITEM_BY_ID: Record<string, Item> = Object.fromEntries(
   [...ALL_ITEMS, ...SAFETY_ITEMS].map((i) => [i.id, i]),
 )
+
+/** Which seven open the door, by which door they came through. */
+export function jhalakFor(lens: Lens): readonly string[] {
+  return lens === 'self' ? JHALAK_SELF_ORDER : JHALAK_ORDER
+}
 
 export function item(id: string): Item {
   const i = ITEM_BY_ID[id]
@@ -63,11 +68,11 @@ export const CHAPTER_META: Record<ChapterId, { title: string; hindi?: string; bl
 export function itemsForChapter(chapter: ChapterId, ctx: Context): Item[] {
   if (chapter === 'safety') return SAFETY_ITEMS
   if (chapter === 'jhalak') {
-    return JHALAK_ORDER.map((id) => item(id))
+    return jhalakFor(ctx.lens).map((id) => item(id))
   }
   return ALL_ITEMS.filter((i) => {
     if (i.chapter !== chapter) return false
-    if (JHALAK_ORDER.includes(i.id as (typeof JHALAK_ORDER)[number])) return false
+    if ((jhalakFor(ctx.lens) as readonly string[]).includes(i.id)) return false
     if (i.dimension) {
       // A dimension belonging to the other lens is not asked at all.
       const lensOk = lensOfItem(i) === ctx.lens || lensOfItem(i) === 'both'

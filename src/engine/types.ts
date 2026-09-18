@@ -202,6 +202,7 @@ export type FindingKind =
   | 'cutoff'          // crossed a published interpretive threshold
   | 'exclusion'       // what is demonstrably NOT true of them
   | 'partnerGap'      // couple mode: the two people disagree
+  | 'assumption'      // a belief of theirs made falsifiable, with the smallest test that would check it
 
 /**
  * Finn's levels of feedback (Therapeutic Assessment). L1 confirms what they already believe,
@@ -342,6 +343,11 @@ export interface EvidencePacket {
    * in their situation and never invents one.
    */
   practices: SelectedPractice[]
+  /**
+   * The self lens only: the one belief made falsifiable, and the smallest thing that would test it.
+   * Lives on the packet because the take-away needs it and no component may re-derive anything.
+   */
+  assumption?: { assumption: string; test: string }
   /** Deterministic hash of the input. Same input → same packet → cacheable prose. */
   fingerprint: string
 }

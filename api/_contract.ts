@@ -113,6 +113,30 @@ export const AxesZ = z
   })
   .strict()
 
+/**
+ * A prescribed practice, for the plan section only.
+ *
+ * The engine chooses the intervention; the writer never does. But until this existed the writer
+ * wrote "What to actually do, in order" without being told what had been chosen, and the reader
+ * got model-invented advice sitting directly above the real staged plan — two different plans on
+ * one page. The model gets the chosen practice and explains it in this person's words.
+ */
+export const PracticeZ = z
+  .object({
+    id: z.string().max(60),
+    title: z.string().max(120),
+    purpose: z.string().max(400),
+    because: z.string().max(600),
+    stage: z.enum(['now', 'week', 'month']),
+    minutes: z.number().int().min(1).max(120),
+    needsPartner: z.boolean(),
+    firstTime: z.string().max(400),
+    ifItGoesBadly: z.string().max(400),
+    marker: z.string().max(300),
+    evidenceIds: z.array(z.string().max(80)).max(6),
+  })
+  .strict()
+
 export const WriteRequestZ = z
   .object({
     section: SectionRequestZ,
@@ -128,6 +152,8 @@ export const WriteRequestZ = z
     alreadyCovered: z.array(z.string().max(200)).max(24),
     /** Claims the reader has explicitly rejected. The model must not re-assert them. */
     rejected: z.array(z.string().max(2500)).max(12),
+    /** The staged plan, sent to the plan section only. The engine chose these, not the writer. */
+    practices: z.array(PracticeZ).max(6).optional(),
     /** Deterministic; lets the server cache identical work. */
     fingerprint: z.string().max(32),
     /**

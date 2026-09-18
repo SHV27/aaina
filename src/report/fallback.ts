@@ -1,7 +1,8 @@
 import type { EvidencePacket, SectionPlan, ReportSection, Paragraph } from '../engine/types'
 import { DIM_BY_ID, bandLabel } from '../engine/dimensions'
-import { SHAPE_COPY } from '../engine/axes'
+import { SHAPE_COPY, SELF_SHAPE_COPY, selfShapeOf } from '../engine/axes'
 import { compositeOf } from '../engine/derive'
+import { PRACTICE_BY_ID, markerSentence } from '../engine/practices'
 
 /**
  * THE DETERMINISTIC REPORT.
@@ -22,6 +23,13 @@ export function resetFallbackIds() { n = 0 }
 
 function para(text: string, evidenceIds: string[], findingId: string | null = null): Paragraph {
   return { id: pid(), text, evidenceIds, findingId }
+}
+
+/** The reading for this reader, in the right register for the door they came through. */
+function readingFor(packet: EvidencePacket) {
+  return packet.context.lens === 'relationship'
+    ? SHAPE_COPY[packet.axes.shape]
+    : SELF_SHAPE_COPY[selfShapeOf(packet.dimensions)]
 }
 
 export function fallbackSection(plan: SectionPlan, packet: EvidencePacket): ReportSection {
@@ -55,7 +63,7 @@ export function fallbackSection(plan: SectionPlan, packet: EvidencePacket): Repo
       paragraphs.push(para(
         `This rests on ${countAnswers(packet)} answers across ${scored.length} measured dimensions. ` +
         `Each dimension is scored as a percentage of the maximum possible — literally how far up the scale you answered — so the number is a restatement of what you did rather than a comparison against strangers. ` +
-        `The overall figure weights those dimensions by how strongly published research ties each one to relationship outcomes, and ${comp.excluded.length > 0 ? `${comp.excluded.length} dimension${comp.excluded.length === 1 ? '' : 's'} you left thin ${comp.excluded.length === 1 ? 'was' : 'were'} kept out of it rather than guessed at` : 'nothing was excluded'}.`,
+        `${packet.context.lens === 'relationship' ? 'The overall figure weights those dimensions by how strongly published research ties each one to relationship outcomes' : 'Nothing here is compared against other people — every number is read within your own profile, because what is interesting about a self-portrait is which parts of it stand out against the rest of it'}, and ${comp.excluded.length > 0 ? `${comp.excluded.length} dimension${comp.excluded.length === 1 ? '' : 's'} you left thin ${comp.excluded.length === 1 ? 'was' : 'were'} kept out rather than guessed at` : 'nothing was excluded'}.`,
         scored.slice(0, 3).map((d) => `ev:dim:${d.id}`),
       ))
       break
@@ -70,7 +78,7 @@ export function fallbackSection(plan: SectionPlan, packet: EvidencePacket): Repo
 
     case 'standing': {
       const comp = compositeOf(packet)
-      const shape = SHAPE_COPY[packet.axes.shape]
+      const shape = readingFor(packet)
       paragraphs.push(para(
         `${shape.title}. ${shape.lead}`,
         packet.dimensions.slice(0, 2).map((d) => `ev:dim:${d.id}`),
@@ -104,7 +112,7 @@ export function fallbackSection(plan: SectionPlan, packet: EvidencePacket): Repo
       break
 
     case 'read': {
-      const shape = SHAPE_COPY[packet.axes.shape]
+      const shape = readingFor(packet)
       paragraphs.push(para(
         `${shape.lead} That is the reading your own answers produce. It is a description of a pattern, not an instruction about your life — and the decision stays exactly where it was before you opened this, which is with you.`,
         packet.findings.slice(0, 2).flatMap((f) => f.evidence.slice(0, 1).map((e) => e.id)),
@@ -120,6 +128,46 @@ export function fallbackSection(plan: SectionPlan, packet: EvidencePacket): Repo
         packet.findings.slice(0, 1).flatMap((f) => f.evidence.slice(0, 1).map((e) => e.id)),
       ))
       break
+
+    /* The one section whose absence would be felt as a broken promise. Without this case the plan
+       rendered whichever finding was left over — a person who read ten thousand words about
+       themselves and reached "What to actually do, in order" would have found an observation. */
+    case 'plan': {
+      const staged = packet.practices
+        .map((sp) => ({ sp, pr: PRACTICE_BY_ID[sp.practiceId] }))
+        .filter((x): x is { sp: typeof x.sp; pr: NonNullable<typeof x.pr> } => !!x.pr)
+      if (staged.length === 0) break
+
+      const order: Record<string, number> = { now: 0, week: 1, month: 2 }
+      staged.sort((a, b) => (order[a.pr.stage] ?? 3) - (order[b.pr.stage] ?? 3))
+
+      paragraphs.push(para(
+        `What follows is a sequence rather than a list, and the order is the point — each one is ` +
+        `only doable because of the one before it. Everything here is a named, published exercise ` +
+        `with its steps written out below, and none of it takes longer than ${Math.max(...staged.map((x) => x.pr.minutes))} minutes.`,
+        packet.dimensions.slice(0, 1).map((d) => `ev:dim:${d.id}`),
+      ))
+
+      const when: Record<string, string> = {
+        now: 'This week',
+        week: 'Once that is running',
+        month: 'After a few weeks of the above',
+      }
+      let lastStage = ''
+      for (const { sp, pr } of staged) {
+        const lead = pr.stage === lastStage ? 'Alongside it' : (when[pr.stage] ?? 'Next')
+        lastStage = pr.stage
+        paragraphs.push(para(
+          `${lead}: ${pr.title}. ${pr.purpose} ${sp.because} ` +
+          `It takes about ${pr.minutes} minutes and you do it ${pr.needsPartner ? 'together' : 'on your own'}. ` +
+          `The first time, ${lowerFirst(pr.firstTime)} Where it usually goes wrong: ${lowerFirst(pr.ifItGoesBadly)} ` +
+          `${markerSentence(pr.marker)}`,
+          sp.evidenceIds.length ? sp.evidenceIds : packet.dimensions.slice(0, 1).map((d) => `ev:dim:${d.id}`),
+          sp.findingId,
+        ))
+      }
+      break
+    }
 
     case 'limits':
       for (const l of packet.limits) {
@@ -143,6 +191,11 @@ export function fallbackSection(plan: SectionPlan, packet: EvidencePacket): Repo
     paragraphs,
     fallbackReason: 'Written directly from your answers, without the writer.',
   }
+}
+
+function lowerFirst(s: string): string {
+  const t = s.trim()
+  return t.length ? t[0]!.toLowerCase() + t.slice(1) : t
 }
 
 function countAnswers(packet: EvidencePacket): number {

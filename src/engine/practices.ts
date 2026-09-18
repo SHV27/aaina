@@ -77,6 +77,16 @@ export interface Practice {
    * on what each partner came in wanting — matching the work to the ask is not a nicety.
    */
   anchorFor?: HelpMode
+  /**
+   * Offered ONLY when this signal is present.
+   *
+   * The protective practices rank well on merit — they are short, solo, and broadly indicated — so
+   * without this they were being handed to people who had disclosed nothing. A live run gave a
+   * safety-planning exercise and an accountability-for-hurting-someone exercise to a person whose
+   * relationship had simply ended. The first is alarming and the second is an accusation. Some
+   * practices must be unreachable unless the reader's own answers reach for them.
+   */
+  requiresSignal?: Signal[]
   /** Signals that withhold this practice, each naming what is offered instead. */
   suppressedBy?: Partial<Record<Signal, { why: string; substitute: string | null }>>
   /**
@@ -115,6 +125,7 @@ export const PRACTICES: Practice[] = [
     marker: 'This week: you can name the room, the person and where the documents are, without having to think.',
     indicatedFor: ['emotionRegulation', 'conflict'],
     modes: ['understand', 'decide', 'endure', 'repair', 'recover'],
+    requiresSignal: ['physicalViolence', 'coerciveControl', 'familyIsTheSourceOfHarm'],
   },
   {
     id: 'accountability',
@@ -139,6 +150,7 @@ export const PRACTICES: Practice[] = [
     marker: 'Within four weeks: you can name the moment before the moment, and you left at it once.',
     indicatedFor: ['emotionRegulation', 'conflict', 'agency'],
     modes: ['understand', 'repair', 'decide', 'endure', 'recover'],
+    requiresSignal: ['perpetration'],
   },
   {
     id: 'inlaw-routing',
@@ -479,6 +491,64 @@ export const PRACTICES: Practice[] = [
     },
   },
 
+  {
+    id: 'invisible-load',
+    title: 'Counting the work nobody counts',
+    tradition: 'Cognitive household labour audit (Daminger 2019)',
+    sources: ['daminger2019', 'mospi2024', 'algoe2010'],
+    evidence: 'clinical',
+    purpose:
+      'The most common unspoken grievance in Indian marriages, and the hardest to raise without it becoming an accusation. India’s own Time Use Survey puts married women at 388 minutes a day of unpaid domestic work against married men’s 47. A number turns a resentment into a measurement, and a measurement can be discussed.',
+    stage: 'week',
+    minutes: 40,
+    needsPartner: true,
+    steps: [
+      'For one week, both of you write down what you did and roughly how long it took. Not a complaint log — a list. Do it separately and do not compare until the week is over.',
+      'Then add the part that never appears on such a list: who ANTICIPATED each thing before it became urgent, who worked out the OPTIONS, who DECIDED, and who kept MONITORING that it stayed done. Those four are separable, and the anticipating and the monitoring are the invisible ones.',
+      'Compare the two lists side by side, once, without defending anything. Almost every couple finds the doing is more even than the anticipating.',
+      'Move ONE thing over completely — all four parts of it, including the noticing and the remembering. A task handed over with the remembering kept back has not been handed over.',
+      'Check after three weeks whether it stayed moved. Things move back quietly and without anyone deciding to.',
+    ],
+    firstTime: 'The person who does less will be genuinely surprised, and that surprise is usually real rather than performed. The person who does more will find writing it down harder than doing it.',
+    ifItGoesBadly: 'If it becomes a scoreboard argument, stop comparing totals and move one single thing. The totals are almost never resolvable; one task is.',
+    marker: 'Within six weeks: one task moved entirely, including the remembering, and it had not moved back.',
+    indicatedFor: ['appreciation', 'conflict', 'responsiveness', 'lifeSatisfaction'],
+    modes: ['repair', 'endure'],
+    suppressedBy: {
+      coerciveControl: {
+        why: 'Where somebody is already controlling the household, an audit hands them a more precise instrument.',
+        substitute: 'unilateral-exit',
+      },
+      physicalViolence: { why: 'Raising an imbalance is not a safe act here, whatever the numbers say.', substitute: 'unilateral-exit' },
+      partnerWillNotParticipate: { why: 'This one genuinely takes two people, and only one of you is here.', substitute: 'behavioural-activation' },
+      ended: { why: 'There is no shared household left to divide.', substitute: 'grief-structure' },
+    },
+  },
+  {
+    id: 'reappraisal-choice',
+    title: 'Knowing which one you are actually trying to do',
+    tradition: 'Emotion regulation after a break-up (Langeslag & Sanchez 2018)',
+    sources: ['langeslag2018', 'gross2003', 'treynor2003'],
+    evidence: 'trial',
+    purpose:
+      'After an ending there are two different goals and they pull in opposite directions. Thinking about their faults lowers how much you love them and makes you feel worse. Distraction lifts your mood and leaves the love where it is. Most people do both at random and conclude nothing works.',
+    stage: 'week',
+    minutes: 15,
+    needsPartner: false,
+    steps: [
+      'Decide, today, which you are actually after: to stop loving them, or to feel better. They are not the same goal and they do not respond to the same thing.',
+      'If it is to feel better: distraction. Deliberately, on purpose, scheduled — something absorbing that has nothing to do with them. It will feel like avoidance and it measurably is not.',
+      'If it is to lower the love: negative reappraisal — deliberately recalling what was actually wrong. Know the cost in advance, because it reliably worsens mood in the short run.',
+      'Do not do both in the same hour. Alternating between them is why it has felt like nothing is working.',
+      'Revisit the choice weekly. Most people want the second early on and the first later, and the switch is normal rather than a relapse.',
+    ],
+    firstTime: 'Choosing feels arbitrary and slightly cold. Choosing is the intervention; the strategies only work when they are not competing.',
+    ifItGoesBadly: 'If the negative reappraisal is flattening you, you have picked the wrong goal for this week. Switch to distraction and come back to it.',
+    marker: 'Two weeks: you can say which goal you were working on, and you did not switch mid-day.',
+    indicatedFor: ['rumination', 'emotionRegulation', 'lifeSatisfaction'],
+    modes: ['recover'],
+  },
+
   /* ══════════════ deciding ══════════════ */
   {
     id: 'decisional-balance',
@@ -800,7 +870,10 @@ export interface Selection {
  * place of the dangerous one, rather than with a gap where it was.
  */
 export function selectPractices(ctx: PracticeContext, limit = 5): Selection[] {
-  const fits = (p: Practice) => p.modes.some((m) => ctx.help.includes(m))
+  const fits = (p: Practice) =>
+    p.modes.some((m) => ctx.help.includes(m)) &&
+    // A practice gated to a signal is unreachable unless the reader's answers reached for it.
+    (!p.requiresSignal || p.requiresSignal.some((s) => ctx.signals.has(s)))
 
   const rank = (p: Practice) => {
     let fit = 0
@@ -817,7 +890,7 @@ export function selectPractices(ctx: PracticeContext, limit = 5): Selection[] {
   const taken = new Set<string>()
 
   /* Anchors first — the thing each active mode exists to deliver, before ranking gets a say. */
-  const anchors = PRACTICES.filter((p) => p.anchorFor && ctx.help.includes(p.anchorFor))
+  const anchors = PRACTICES.filter((p) => p.anchorFor && ctx.help.includes(p.anchorFor) && fits(p))
   const ordered = [...anchors, ...PRACTICES.filter(fits).sort((a, b) => rank(b) - rank(a))]
 
   for (const p of ordered) {
@@ -865,4 +938,31 @@ export function selectPractices(ctx: PracticeContext, limit = 5): Selection[] {
 
   const STAGE_ORDER: Record<PracticeStage, number> = { now: 0, week: 1, month: 2 }
   return out.sort((a, b) => STAGE_ORDER[a.practice.stage] - STAGE_ORDER[b.practice.stage])
+}
+
+/**
+ * Markers are stored as "two weeks: fewer than half your days had it outside the window", so
+ * dropping one into a sentence produced "You will know it is working when two weeks: fewer than…".
+ * Split the timeframe off and put it where a person would say it.
+ */
+const PREPOSITIONS = ['within', 'after', 'by', 'from', 'over']
+
+export function markerSentence(raw: string): string {
+  const at = raw.indexOf(':')
+  if (at < 0) return `You will know it is working when ${lowerMarker(raw)}`
+  const when = raw.slice(0, at).trim().toLowerCase()
+  const what = lowerMarker(raw.slice(at + 1))
+  const phrase =
+    when === 'immediate' ? 'Straight away' :
+    // Deliberately a word check rather than a regex: a stray escape in this file once turned a
+    // whitespace class in a quote-trimmer into the letter "s" and ate that letter out of the
+    // reader's own words. Nothing here needs a backslash, so nothing here has one.
+    PREPOSITIONS.includes(when.split(' ')[0] ?? '') ? when[0]!.toUpperCase() + when.slice(1) :
+    `In ${when}`
+  return `${phrase}, the thing to look for is this: ${what}`
+}
+
+function lowerMarker(s: string): string {
+  const t = s.trim()
+  return t.length ? t[0]!.toLowerCase() + t.slice(1) : t
 }

@@ -1,6 +1,6 @@
 import type { EvidencePacket } from '../engine/types'
-import { SHAPE_COPY } from '../engine/axes'
-import { PRACTICE_BY_ID } from '../engine/practices'
+import { SHAPE_COPY, SELF_SHAPE_COPY, selfShapeOf } from '../engine/axes'
+import { PRACTICE_BY_ID, markerSentence } from '../engine/practices'
 import { DIM_BY_ID } from '../engine/dimensions'
 import { Plate } from './bits'
 
@@ -19,12 +19,14 @@ import { Plate } from './bits'
  * is new information, which is what makes it safe to compress.
  */
 export function Takeaway({ packet }: { packet: EvidencePacket }) {
-  const shape = SHAPE_COPY[packet.axes.shape]
+  const isRelationship = packet.context.lens === 'relationship'
+  const shape = isRelationship
+    ? SHAPE_COPY[packet.axes.shape]
+    : SELF_SHAPE_COPY[selfShapeOf(packet.dimensions)]
   const sharpest = packet.findings.filter((f) => f.accepted).slice(0, 2)
   const first = packet.practices[0]
   const firstPractice = first ? PRACTICE_BY_ID[first.practiceId] : undefined
-  const isRelationship = packet.context.lens === 'relationship'
-
+  const test = packet.assumption
   const weakest = [...packet.dimensions]
     .filter((d) => !d.thin)
     .map((d) => ({ d, oriented: DIM_BY_ID[d.id].higherIsBetter ? d.pomp : 100 - d.pomp }))
@@ -66,6 +68,18 @@ export function Takeaway({ packet }: { packet: EvidencePacket }) {
 
         {sharpest[1] && <Row label="And alongside it">{sharpest[1].statement}</Row>}
 
+        {/* For a self reader this is the whole point of the page. Everything above describes them;
+            this is the only line that asks them to go and find something out. */}
+        {test && (
+          <Row label="The belief worth testing, and the test">
+            <span style={{ color: 'var(--color-kajal-soft)' }}>You have been living as though </span>
+            {test.assumption}
+            <span style={{ color: 'var(--color-kajal-soft)' }}>. You would find out by doing this: </span>
+            {test.test}
+            <span style={{ color: 'var(--color-kajal-soft)' }}>.</span>
+          </Row>
+        )}
+
         {firstPractice && (
           <Row label="The first thing to do">
             <strong style={{ fontWeight: 500 }}>{firstPractice.title}</strong> — {firstPractice.purpose}{' '}
@@ -74,7 +88,7 @@ export function Takeaway({ packet }: { packet: EvidencePacket }) {
         )}
 
         {firstPractice && (
-          <Row label="How you will know in six weeks">{firstPractice.marker}</Row>
+          <Row label="How you will know it is working">{markerSentence(firstPractice.marker)}</Row>
         )}
 
         <Row label="What this cannot tell you">

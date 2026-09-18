@@ -85,6 +85,25 @@ function renderEvidence(req: WriteRequest): string {
     }
   }
 
+  if (req.practices?.length) {
+    lines.push(`
+■ THE PLAN — chosen by the engine from a published library. These ARE the steps.`)
+    lines.push(`  You do not invent, add, reorder or replace any of them. You write them so this person`)
+    lines.push(`  can do them: name the step, say why it is theirs using the reason given, and make it`)
+    lines.push(`  feel doable. Do not restate the steps list — it is printed under your section already.`)
+    for (const p of req.practices) {
+      const when = p.stage === 'now' ? 'this week' : p.stage === 'week' ? 'once that is running' : 'after a few weeks'
+      lines.push(`
+    ${p.title}  (${when}, ${p.minutes} min, ${p.needsPartner ? 'with their partner' : 'on their own'})`)
+      lines.push(`      what it is for: ${p.purpose}`)
+      lines.push(`      why THIS person: ${p.because}`)
+      lines.push(`      first attempt: ${p.firstTime}`)
+      lines.push(`      when it goes wrong: ${p.ifItGoesBadly}`)
+      lines.push(`      how they will know: ${p.marker}`)
+      if (p.evidenceIds.length) lines.push(`      cite: ${p.evidenceIds.join('  ')}`)
+    }
+  }
+
   if (req.dimensions.length) {
     lines.push(`\n■ THE NUMBERS — the only percentages you may state, each with its id`)
     for (const d of req.dimensions) {
@@ -101,6 +120,7 @@ function idIndex(req: WriteRequest): string {
     ...req.findings.flatMap((f) => f.evidence.map((e) => e.id)),
     ...req.quotes.map((q) => q.id),
     ...req.dimensions.map((d) => `ev:dim:${d.id}`),
+    ...(req.practices ?? []).flatMap((p) => p.evidenceIds),
   ]
   return [...new Set(ids)].join('  ')
 }

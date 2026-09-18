@@ -6,6 +6,7 @@ import { computeAxes } from './axes'
 import { planSections, limitsFor } from './plan'
 import { ITEM_BY_ID } from '../items'
 import { choosePractices } from './prescribe'
+import { selfWorkFindings, resetSelfWorkIds, assumptionTest } from './selfwork'
 
 export const PACKET_VERSION = '3.0.0'
 
@@ -22,6 +23,7 @@ export const PACKET_VERSION = '3.0.0'
 export function derive(input: AssessmentInput): EvidencePacket {
   resetFindingIds()
   resetProfileIds()
+  resetSelfWorkIds()
 
   const { context, answers, safetyAnswers, skipped } = input
 
@@ -33,12 +35,18 @@ export function derive(input: AssessmentInput): EvidencePacket {
     ...configuralFindings(dimensions),
     ...exclusionFindings(dimensions, context),
     ...profileFindings(dimensions, answers),
+    /* The self lens has work the contradiction engine does not do: the competing commitment, the
+       Big Assumption and its test, the place the pattern did not hold, and the measured distance
+       to the person they described. See selfwork.ts — and LAW 2, which is why it is computed here
+       rather than asked for in a prompt. */
+    ...(context.lens === 'self' ? selfWorkFindings(dimensions, answers) : []),
   ].sort((a, b) => b.notability - a.notability)
 
   const quotes = collectQuotes(input)
   const plan = planSections(context, findings, axes, dimensions)
   const limits = limitsFor(context, axes, dimensions)
   const practices = choosePractices(context, dimensions, findings, axes)
+  const assumption = context.lens === 'self' ? assumptionTest(answers) : null
 
   return {
     version: PACKET_VERSION,
@@ -50,6 +58,7 @@ export function derive(input: AssessmentInput): EvidencePacket {
     quotes,
     limits,
     practices,
+    ...(assumption ? { assumption: { assumption: assumption.assumption, test: assumption.test } } : {}),
     fingerprint: fingerprint(input),
   }
 }
