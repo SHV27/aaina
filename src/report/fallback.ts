@@ -42,6 +42,17 @@ export function fallbackSection(plan: SectionPlan, packet: EvidencePacket): Repo
   /* sections that are argument rather than evidence get purpose-written deterministic prose */
   switch (plan.id) {
     case 'opening': {
+      /* If the concern finding is rendering below, it already quotes them at length — quoting
+         them again three lines above it reads as a stutter, which is what it looked like on the
+         page: the same sentence twice, in two consecutive paragraphs. */
+      const concernRenders = findings.some((f) => f.id.startsWith('f:con:'))
+      if (concernRenders) {
+        paragraphs.push(para(
+          `Everything below is built from the ${countAnswers(packet)} answers you gave, and from nothing else. Where a sentence makes a claim, the answers behind it are attached to it and you can open them.`,
+          packet.dimensions.slice(0, 1).map((d) => `ev:dim:${d.id}`),
+        ))
+        break
+      }
       const why = packet.quotes.find((q) => q.id === 'ev:quote:txt_why')
       if (why) {
         paragraphs.push(para(
@@ -169,6 +180,22 @@ export function fallbackSection(plan: SectionPlan, packet: EvidencePacket): Repo
           `${markerSentence(pr.marker)}`,
           sp.evidenceIds.length ? sp.evidenceIds : packet.dimensions.slice(0, 1).map((d) => `ev:dim:${d.id}`),
           sp.findingId,
+        ))
+      }
+      break
+    }
+
+    /* The anchor of the recover mode, so it may never drop for want of findings — but it also may
+       never offer a decision, because there is not one pending. */
+    case 'aftermath': {
+      if (findings.length === 0) {
+        paragraphs.push(para(
+          `There is no decision in front of you, so there is not going to be one in here. What there ` +
+          `is instead is a description of where you actually are, which is a harder thing to get hold ` +
+          `of than it sounds — partly because everybody around you is trying to be encouraging, and ` +
+          `encouragement and accuracy are different services. ` +
+          `Nothing below asks you to have decided anything, or to be further along than you are.`,
+          packet.dimensions.slice(0, 2).map((d) => `ev:dim:${d.id}`),
         ))
       }
       break

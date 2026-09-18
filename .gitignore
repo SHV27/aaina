@@ -39,3 +39,8 @@ Thumbs.db
 # test output
 e2e/screenshots/
 e2e/output/
+
+# a stray variable-font axis registry that came down with a font download
+gf.json
+
+# screenshots for the README are committed under docs/shots; test output is not

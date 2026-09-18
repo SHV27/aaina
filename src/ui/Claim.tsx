@@ -49,10 +49,23 @@ export function Claim({ text, evidenceIds, packet, printReceipts = false }: Prop
 
   const sources = [...new Set(evidence.flatMap((e) => e.sources))]
 
+  /* Break a long claim into paragraphs at sentence boundaries.
+   *
+   * The writer paragraphs its own prose. The engine's computed statements do not — they are built
+   * by concatenation, and the longest of them (the Big Assumption, the competing commitment, the
+   * family findings) run to three hundred words. Rendered as a single <p> that is a wall, and the
+   * outage path IS the report on a bad free-tier day.
+   *
+   * Nothing here changes a word, adds one, or moves one. Same text, same receipts, same claim. */
+  const blocks = paragraphise(text)
+
   return (
     <div className="claim" style={{ marginBottom: '1.35rem' }}>
+      {blocks.slice(0, -1).map((b, i) => (
+        <p key={i} style={{ marginBottom: '0.9rem' }}>{b}</p>
+      ))}
       <p>
-        {text}
+        {blocks[blocks.length - 1]}
         <button
           type="button"
           className="claim-open no-print"
@@ -97,4 +110,37 @@ export function Claim({ text, evidenceIds, packet, printReceipts = false }: Prop
       )}
     </div>
   )
+}
+
+/**
+ * Split at sentence boundaries into blocks of roughly one screen-paragraph each.
+ *
+ * Deliberately conservative: below the threshold nothing is touched at all, and a sentence is
+ * never split. An abbreviation that ends in a full stop would at worst produce one short
+ * paragraph, which is a cosmetic outcome rather than a wrong one.
+ */
+const PARAGRAPH_AT = 430
+const SENTENCE = /(?<=[.!?\u2026])\s+(?=[A-Z"\u201c])/
+
+export function paragraphise(text: string): string[] {
+  if (text.length <= PARAGRAPH_AT * 1.4) return [text]
+
+  const sentences = text.split(SENTENCE)
+  if (sentences.length < 3) return [text]
+
+  const out: string[] = []
+  let current = ''
+  for (const s of sentences) {
+    current = current ? `${current} ${s}` : s
+    if (current.length >= PARAGRAPH_AT) {
+      out.push(current)
+      current = ''
+    }
+  }
+  if (current) {
+    // Never leave a one-line orphan at the end; fold it back into the paragraph above.
+    if (current.length < 120 && out.length) out[out.length - 1] += ` ${current}`
+    else out.push(current)
+  }
+  return out.length ? out : [text]
 }

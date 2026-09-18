@@ -82,6 +82,7 @@ const CYCLE: Slot = {
     'Draw the loop with their quotes at each node: what starts it, what each person does, what that produces, how it comes round again. A pattern, never a person. If they described a specific recurring scene, use that scene.',
   words: 850,
   wants: 'cycle',
+  minFindings: 1,
 }
 
 const WHY: Slot = {
@@ -91,6 +92,7 @@ const WHY: Slot = {
     'The DEEP formulation — differences, emotional sensitivities, external circumstances, patterns of interaction. The highest-value paragraph in the product: it makes the pattern understandable without making anyone the villain, including anyone\'s family.',
   words: 1000,
   wants: 'deep',
+  minFindings: 1,
 }
 
 const NOT: Slot = {
@@ -131,6 +133,7 @@ const FAMILY: Slot = {
     'Name the distance between what they want and what their family expects, using their own words for both sides. Hold two things at once: this person is entitled to their own life, AND the people pressuring them are almost certainly trying to protect them by the only logic they know. Do NOT cast the family as an antagonist, do not suggest cutting anyone off, and do not say "it is your life, not theirs" — that sentence is useless to somebody who will still be at the same dinner table next week. Separate being your own person from rejecting your people; those are different things and conflating them is what traps people here.',
   words: 950,
   wants: 'family',
+  minFindings: 1,
 }
 
 /* ────────────────────────────  the middles  ──────────────────────────── */
@@ -142,6 +145,7 @@ const HOLDING: Slot = {
     'Separate what draws them from what keeps them. Name constraint, alternatives, family and the beliefs about loyalty and villainy without editorialising.',
   words: 900,
   wants: 'hold',
+  minFindings: 1,
 }
 
 const PATHS: Slot = {
@@ -168,6 +172,7 @@ const MECHANISM: Slot = {
     'For a repair: name the specific mechanism, not the symptom. "You fight about money" is a symptom; "one of you raises it when already depleted and the other hears an accusation" is a mechanism. Mechanisms can be intervened on; symptoms cannot. Use their described scene.',
   words: 850,
   wants: 'deep',
+  minFindings: 1,
 }
 
 const PRESSURE: Slot = {
@@ -177,6 +182,7 @@ const PRESSURE: Slot = {
     'For a couple under external strain: separate the load from the relationship. Name what is genuinely being done TO them — money, distance, a baby, illness, work, family obligation — and distinguish it from what is going wrong BETWEEN them. Couples under load routinely misread stress as incompatibility; say so if the evidence supports it.',
   words: 850,
   wants: 'deep',
+  minFindings: 1,
 }
 
 const AFTERMATH: Slot = {
@@ -284,11 +290,11 @@ const SELF_SLOTS: Slot[] = [
   { id: 'working', title: 'What is already strong', intent: 'Strengths with receipts. Specific, evidenced, not reassurance.', words: 620, wants: 'strengths', minFindings: 1 },
   { id: 'turn', title: 'Before the next part', intent: 'The warning shot. One paragraph, then stop.', words: 140, wants: 'none' },
   { id: 'pattern', title: 'The pattern', intent: 'The central finding as the "aha", in their vocabulary. Externalise it — a pattern they run, never a thing they are.', words: 950, wants: 'theme', minFindings: 1 },
-  { id: 'belief', title: 'The belief underneath it', intent: "The core belief the pattern protects. Kegan's competing commitment: the pattern is doing a job. Name the job.", words: 900, wants: 'deep' },
+  { id: 'belief', title: 'The belief underneath it', intent: "The core belief the pattern protects. Kegan's competing commitment: the pattern is doing a job. Name the job.", words: 900, wants: 'deep', minFindings: 1 },
   { id: 'exception', title: 'Where it does not hold', intent: 'The unique outcome — a place in their own answers where the pattern did NOT run. Never present a pattern without its exception. Be curious about what was different there rather than prescriptive; the reader knows and you do not.', words: 600, wants: 'exception', minFindings: 1 },
   { id: 'not', title: 'What you are not', intent: 'Exclusion claims from their own profile. What would be true of most people but is demonstrably not true of them.', words: 520, wants: 'exclusion', minFindings: 1 },
   { id: 'standing', title: 'Your profile, read out', intent: 'The dimensions in plain language, with what stands out within their own shape rather than against anyone else.', words: 700, wants: 'rest' },
-  { id: 'future', title: 'The person you described', intent: 'Their future self in their own words, and the specific, named distance between here and there.', words: 850, wants: 'future' },
+  { id: 'future', title: 'The person you described', intent: 'Their future self in their own words, and the specific, named distance between here and there.', words: 850, wants: 'future', minFindings: 1 },
   { id: 'assumption', title: 'The one assumption worth testing', intent: 'The Big Assumption the engine identified, and the one small experiment that would test it — both are given to you in the findings. Your job is to make the experiment feel doable rather than brave, and to say plainly what a result either way would mean. One assumption, one test. Never a list, never a second suggestion.', words: 700, wants: 'assumption', minFindings: 1 },
   { id: 'plan', title: 'What to actually do, in order', intent: 'A sequenced plan in if-then form, each step tied to a finding, with what to do when a step goes badly.', words: 800, wants: 'rest' },
   { id: 'limits', title: 'What this cannot tell you', intent: 'Honest limits.', words: 360, wants: 'none' },
